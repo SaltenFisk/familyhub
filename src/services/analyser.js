@@ -54,7 +54,8 @@ async function analyseEmail(emailId) {
 
   let analysis;
   try {
-    analysis = JSON.parse(response.content[0].text);
+    const raw = response.content[0].text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+    analysis = JSON.parse(raw);
   } catch {
     throw new Error(`Claude returned invalid JSON: ${response.content[0].text}`);
   }
