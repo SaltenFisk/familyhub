@@ -9,15 +9,9 @@ export default function FeedbackModal() {
 
   function handleSubmit() {
     if (!title.trim()) return
-    const issueTitle = encodeURIComponent(`[Feature Request] ${title.trim()}`)
-    const issueBody = encodeURIComponent(
-      `## Feature Request\n\n${body.trim() || '_No description provided._'}\n\n---\n_Submitted from FamilyHub_`
-    )
-    window.open(
-      `https://github.com/SaltenFisk/familyhub/issues/new?title=${issueTitle}&body=${issueBody}&labels=enhancement`,
-      '_blank',
-      'noopener,noreferrer'
-    )
+    const subject = encodeURIComponent(`FamilyHub Feature Request: ${title.trim()}`)
+    const bodyText = encodeURIComponent(body.trim() || '(no description provided)')
+    window.location.href = `mailto:darren.a.johnston@gmail.com?subject=${subject}&body=${bodyText}`
     setTitle('')
     setBody('')
     setOpen(false)
@@ -77,7 +71,7 @@ export default function FeedbackModal() {
           </div>
 
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
-            This will open a GitHub issue in a new tab. A GitHub account is needed to submit.
+            This will open your mail app with a pre-filled email to Darren.
           </p>
 
           <div className="flex justify-end gap-2 mt-4">
@@ -91,7 +85,7 @@ export default function FeedbackModal() {
               disabled={!title.trim()}
               className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 text-white rounded-lg disabled:opacity-40 transition-colors font-medium"
             >
-              Open GitHub Issue
+              Send Suggestion
             </button>
           </div>
         </Dialog.Content>
