@@ -40,9 +40,10 @@ const statusColour: Record<string, 'gray' | 'amber' | 'green' | 'orange'> = {
 interface Props {
   tasks: Task[]
   onRowClick: (task: Task) => void
+  showAction?: boolean
 }
 
-export default function TaskTable({ tasks, onRowClick }: Props) {
+export default function TaskTable({ tasks, onRowClick, showAction = false }: Props) {
   if (tasks.length === 0) {
     return <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center">No tasks</p>
   }
@@ -56,7 +57,7 @@ export default function TaskTable({ tasks, onRowClick }: Props) {
             <th className="px-4 py-2.5 font-semibold">Sender</th>
             <th className="px-4 py-2.5 font-semibold">Category</th>
             <th className="px-4 py-2.5 font-semibold">Tags</th>
-            <th className="px-4 py-2.5 font-semibold">Summary</th>
+            <th className="px-4 py-2.5 font-semibold">{showAction ? 'Action' : 'Summary'}</th>
             <th className="px-4 py-2.5 font-semibold">Due</th>
             <th className="px-4 py-2.5 font-semibold">Assignee</th>
             <th className="px-4 py-2.5 font-semibold">Status</th>
@@ -91,7 +92,9 @@ export default function TaskTable({ tasks, onRowClick }: Props) {
                 </div>
               </td>
               <td className="px-4 py-3 text-slate-600 dark:text-slate-300 max-w-[240px]">
-                <p className="line-clamp-2 text-xs leading-relaxed">{task.summary}</p>
+                <p className="line-clamp-2 text-xs leading-relaxed">
+                  {showAction ? (task.action || task.summary) : task.summary}
+                </p>
               </td>
               <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-xs font-mono">
                 {task.due_date ? format(new Date(task.due_date), 'd MMM yy') : '—'}

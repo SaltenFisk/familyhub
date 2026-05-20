@@ -22,7 +22,7 @@ const categoryColour: Record<string, 'blue' | 'purple' | 'green'> = {
   Hope: 'blue', Charles: 'purple', Household: 'green',
 }
 
-function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void }) {
+function TaskPanel({ title, tasks, onRowClick, showAction = false }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void; showAction?: boolean }) {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
       <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
@@ -30,7 +30,7 @@ function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[];
         <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-full px-2.5 py-0.5 font-medium">{tasks.length}</span>
       </div>
       <div className="p-4">
-        <TaskTable tasks={tasks} onRowClick={onRowClick} />
+        <TaskTable tasks={tasks} onRowClick={onRowClick} showAction={showAction} />
       </div>
     </div>
   )
@@ -114,7 +114,7 @@ export default function DemoDashboard() {
       </header>
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 pb-24 md:pb-6 space-y-5">
-        <TaskPanel title="Actions Required" tasks={actionTasks} onRowClick={handleRowClick} />
+        <TaskPanel title="Actions Required" tasks={actionTasks} onRowClick={handleRowClick} showAction />
         <TaskPanel title="FYI Only" tasks={fyiTasks} onRowClick={handleRowClick} />
 
         {activeTab === 'home' && (

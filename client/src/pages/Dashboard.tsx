@@ -19,7 +19,7 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string
   { id: 'household', label: 'Household', icon: <Building2 size={16} />, category: 'Household' },
 ]
 
-function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void }) {
+function TaskPanel({ title, tasks, onRowClick, showAction = false }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void; showAction?: boolean }) {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
       <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
@@ -27,7 +27,7 @@ function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[];
         <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-full px-2.5 py-0.5 font-medium">{tasks.length}</span>
       </div>
       <div className="p-4">
-        <TaskTable tasks={tasks} onRowClick={onRowClick} />
+        <TaskTable tasks={tasks} onRowClick={onRowClick} showAction={showAction} />
       </div>
     </div>
   )
@@ -128,7 +128,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <TaskPanel title="Actions Required" tasks={actionTasks} onRowClick={setSelectedTask} />
+            <TaskPanel title="Actions Required" tasks={actionTasks} onRowClick={setSelectedTask} showAction />
             <TaskPanel title="FYI Only" tasks={fyiTasks} onRowClick={setSelectedTask} />
 
             {activeTab === 'home' && (
