@@ -39,7 +39,7 @@ When in doubt, default to is_fyi_only = true. It is better to under-flag than to
 
 If is_fyi_only is true, action must be null.`;
 
-const USER_TEMPLATE = (subject, from, body) => `
+const USER_TEMPLATE = (subject, from, body, userNames) => `
 Analyse this email and return JSON with this exact structure:
 {
   "sender": "the organisation or person who sent this email (e.g. 'Thames Water', '3rd Hitchin Scouts', 'Mrs Clarke - Geography'). Use the real name, not the email address. If it is a person at an organisation, prefer the organisation name.",
@@ -48,7 +48,8 @@ Analyse this email and return JSON with this exact structure:
   "due_date": "YYYY-MM-DD or null if no date mentioned",
   "is_fyi_only": true or false,
   "categories": ["Thomas", "Matthew", "Household"] (use only these values, include all that apply),
-  "tags": ["tag1", "tag2"] (short descriptive tags)
+  "tags": ["tag1", "tag2"] (short descriptive tags),
+  "assignee": "name of the person who should action this, or null if unclear. Choose from: ${userNames}. Prefer a parent (adult) unless the action is clearly something only a child would do themselves. If the email is just informational or a child-related task that a parent must handle, assign to a parent."
 }
 
 From: ${from}
@@ -65,6 +66,9 @@ async function analyseEmail(emailId) {
   const body = email.body_text || email.body_html?.replace(/<[^>]+>/g, ' ') || '';
   const truncatedBody = body.slice(0, 4000); // Stay well within token limits
 
+  const [userRows] = await db.query('SELECT id, name FROM users ORDER BY id');
+  const userNames = userRows.map(u => u.name).join(', ');
+
   let response;
   try {
     response = await anthropic.messages.create({
@@ -74,7 +78,7 @@ async function analyseEmail(emailId) {
       messages: [
         {
           role: 'user',
-          content: USER_TEMPLATE(email.subject, `${email.from_name} <${email.from_address}>`, truncatedBody),
+          content: USER_TEMPLATE(email.subject, `${email.from_name} <${email.from_address}>`, truncatedBody, userNames),
         },
       ],
     });
@@ -137,8 +141,15 @@ async function analyseEmail(emailId) {
     if (rows.length > 0) categoryIds.push(rows[0].id);
   }
 
-  // Determine assignee: use default from first tag that has one
-  const assigneeId = tagIds.find(t => t.defaultAssigneeId)?.defaultAssigneeId || null;
+  // Determine assignee: prefer Claude's suggestion, fall back to tag defaults
+  let assigneeId = null;
+  if (analysis.assignee) {
+    const suggested = userRows.find(u => u.name.toLowerCase() === analysis.assignee.toLowerCase());
+    if (suggested) assigneeId = suggested.id;
+  }
+  if (!assigneeId) {
+    assigneeId = tagIds.find(t => t.defaultAssigneeId)?.defaultAssigneeId || null;
+  }
 
   // Insert task
   const [taskResult] = await db.query(
