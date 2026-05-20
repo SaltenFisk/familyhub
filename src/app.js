@@ -18,6 +18,7 @@ api.use('/tasks', require('./routes/tasks'));
 api.use('/emails', require('./routes/emails'));
 api.use('/tags', require('./routes/tags'));
 api.use('/users', require('./routes/users'));
+api.use('/status', require('./routes/status'));
 
 app.use(`${BASE}/api`, api);
 

@@ -6,6 +6,8 @@ import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
 import EmailModal from '../components/EmailModal'
 import RecentEmails from '../components/RecentEmails'
+import FeedbackModal from '../components/FeedbackModal'
+import ApiErrorBanner from '../components/ApiErrorBanner'
 import api from '../api/client'
 
 type TabId = 'home' | 'thomas' | 'matthew' | 'household'
@@ -83,6 +85,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">{user?.name}</span>
+            <FeedbackModal />
             <button
               onClick={toggle}
               className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
@@ -170,6 +173,7 @@ export default function Dashboard() {
           loadTasks()
         }}
       />
+      <ApiErrorBanner />
     </div>
   )
 }

@@ -40,17 +40,39 @@ async function analyseEmail(emailId) {
   const body = email.body_text || email.body_html?.replace(/<[^>]+>/g, ' ') || '';
   const truncatedBody = body.slice(0, 4000); // Stay well within token limits
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: USER_TEMPLATE(email.subject, `${email.from_name} <${email.from_address}>`, truncatedBody),
-      },
-    ],
-  });
+  let response;
+  try {
+    response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: USER_TEMPLATE(email.subject, `${email.from_name} <${email.from_address}>`, truncatedBody),
+        },
+      ],
+    });
+    // Clear any previous API error flag on success
+    await db.query(
+      'INSERT INTO settings (key_name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = NOW()',
+      ['claude_api_error', '', '']
+    ).catch(() => {});
+  } catch (err) {
+    const status = err?.status || err?.statusCode;
+    const isQuotaError = status === 429 || status === 529 || status === 503 ||
+      (err?.message || '').toLowerCase().includes('credit') ||
+      (err?.message || '').toLowerCase().includes('quota') ||
+      (err?.message || '').toLowerCase().includes('overloaded');
+    if (isQuotaError) {
+      const msg = `Claude API error (${status || 'unknown'}): ${err.message}`;
+      await db.query(
+        'INSERT INTO settings (key_name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = NOW()',
+        ['claude_api_error', msg, msg]
+      ).catch(() => {});
+    }
+    throw err;
+  }
 
   let analysis;
   try {

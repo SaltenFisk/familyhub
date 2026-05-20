@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { Link } from 'react-router-dom'
 
 export default function Login() {
   const { login } = useAuth()
@@ -63,6 +64,12 @@ export default function Login() {
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
+          <Link
+            to="/demo"
+            className="block w-full text-center bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-lg py-2.5 text-sm font-semibold transition-colors"
+          >
+            Try Demo
+          </Link>
         </form>
       </div>
     </div>
