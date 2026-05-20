@@ -66,7 +66,7 @@ export default function Dashboard() {
     setSelectedTask({
       id: 0, email_id: emailId, summary: '', action: null, due_date: null,
       is_fyi_only: true, status: 'pending', assignee_name: null,
-      categories: null, tags: null,
+      categories: null, tags: null, sender: email.sender || null,
       from_address: email.from_address, from_name: email.from_name,
       subject: email.subject, received_at: email.received_at,
       body_text: email.body_text, body_html: email.body_html,

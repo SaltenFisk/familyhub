@@ -8,7 +8,7 @@ router.get('/', requireAuth, async (req, res) => {
   const offset = (page - 1) * limit;
 
   let sql = `
-    SELECT t.*, e.from_address, e.from_name, e.subject, e.received_at,
+    SELECT t.*, e.from_address, e.from_name, e.sender, e.subject, e.received_at,
            u.name AS assignee_name,
            GROUP_CONCAT(DISTINCT c.name ORDER BY c.name) AS categories,
            GROUP_CONCAT(DISTINCT tg.name ORDER BY tg.name) AS tags,
@@ -50,7 +50,7 @@ router.get('/', requireAuth, async (req, res) => {
 // GET /tasks/:id — single task with email body
 router.get('/:id', requireAuth, async (req, res) => {
   const [rows] = await db.query(`
-    SELECT t.*, e.from_address, e.from_name, e.subject, e.received_at,
+    SELECT t.*, e.from_address, e.from_name, e.sender, e.subject, e.received_at,
            e.body_text, e.body_html,
            u.name AS assignee_name,
            GROUP_CONCAT(DISTINCT c.name ORDER BY c.name) AS categories,
@@ -72,7 +72,7 @@ router.get('/:id', requireAuth, async (req, res) => {
 
 // PATCH /tasks/:id — update status, assignee, outcome
 router.patch('/:id', requireAuth, async (req, res) => {
-  const { status, assignee_id, outcome } = req.body;
+  const { status, assignee_id, outcome, is_fyi_only } = req.body;
   const task = (await db.query('SELECT * FROM tasks WHERE id = ?', [req.params.id]))[0][0];
   if (!task) return res.status(404).json({ error: 'Not found' });
 
@@ -85,6 +85,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
   if (status) updates.status = status;
   if (outcome !== undefined) updates.outcome = outcome;
   if (assignee_id !== undefined && req.user.role === 'admin') updates.assignee_id = assignee_id;
+  if (is_fyi_only !== undefined && req.user.role === 'admin') updates.is_fyi_only = is_fyi_only ? 1 : 0;
 
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nothing to update' });
 

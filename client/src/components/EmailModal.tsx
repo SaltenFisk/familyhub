@@ -21,6 +21,7 @@ interface Task {
   tags: string | null
   from_address: string
   from_name: string | null
+  sender: string | null
   subject: string
   received_at: string
   body_text?: string
@@ -53,6 +54,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   const [users, setUsers] = useState<User[]>([])
   const [assigneeId, setAssigneeId] = useState<string>('')
   const [status, setStatus] = useState<string>('pending')
+  const [isFyi, setIsFyi] = useState<boolean>(false)
   const [outcome, setOutcome] = useState<string>('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -78,17 +80,20 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
         setFullTask(r.data)
         setAssigneeId(r.data.assignee_id?.toString() || '')
         setStatus(r.data.status || 'pending')
+        setIsFyi(!!r.data.is_fyi_only)
         setOutcome(r.data.outcome || '')
       }).catch(() => {
         setFullTask(task)
         setAssigneeId(task.assignee_id?.toString() || '')
         setStatus(task.status || 'pending')
+        setIsFyi(!!task.is_fyi_only)
         setOutcome('')
       })
     } else {
       // Email-only view (from Recent Emails), no task record
       setFullTask(task)
       setStatus('pending')
+      setIsFyi(!!task.is_fyi_only)
       setOutcome('')
     }
 
@@ -153,7 +158,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     if (!task || task.id === 0) { onClose(); return }
     setSaving(true)
     try {
-      await api.patch(`/tasks/${task.id}`, { status, outcome })
+      await api.patch(`/tasks/${task.id}`, { status, outcome, is_fyi_only: isFyi })
       setSaved(true)
       onUpdated?.()
     } finally {
@@ -334,23 +339,49 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
           {/* Status / outcome controls — only for real tasks */}
           {task && task.id > 0 && (
             <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-3">
-              <div className="flex items-center gap-3">
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Status:</label>
-                <div className="flex gap-2">
-                  {statusOptions.map(o => (
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <div className="flex items-center gap-3">
+                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</label>
+                  <div className="flex gap-2">
                     <button
-                      key={o.value}
-                      onClick={() => setStatus(o.value)}
+                      onClick={() => setIsFyi(false)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                        status === o.value
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                        !isFyi ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                       }`}
                     >
-                      {o.label}
+                      Action
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setIsFyi(true)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        isFyi ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      FYI
+                    </button>
+                  </div>
                 </div>
+
+                {!isFyi && (
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Status:</label>
+                    <div className="flex gap-2">
+                      {statusOptions.map(o => (
+                        <button
+                          key={o.value}
+                          onClick={() => setStatus(o.value)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            status === o.value
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                          }`}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {status === 'done' && (

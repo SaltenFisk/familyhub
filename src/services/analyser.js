@@ -42,6 +42,7 @@ If is_fyi_only is true, action must be null.`;
 const USER_TEMPLATE = (subject, from, body) => `
 Analyse this email and return JSON with this exact structure:
 {
+  "sender": "the organisation or person who sent this email (e.g. 'Thames Water', '3rd Hitchin Scouts', 'Mrs Clarke - Geography'). Use the real name, not the email address. If it is a person at an organisation, prefer the organisation name.",
   "summary": "1-2 sentence summary of what the email is about",
   "action": "specific thing that needs to be done, or null if FYI only",
   "due_date": "YYYY-MM-DD or null if no date mentioned",
@@ -104,6 +105,11 @@ async function analyseEmail(emailId) {
     analysis = JSON.parse(raw);
   } catch {
     throw new Error(`Claude returned invalid JSON: ${response.content[0].text}`);
+  }
+
+  // Store extracted sender name on the email
+  if (analysis.sender) {
+    await db.query('UPDATE emails SET sender = ? WHERE id = ?', [analysis.sender, emailId]);
   }
 
   // Resolve/create tags

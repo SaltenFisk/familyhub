@@ -15,6 +15,7 @@ export interface Task {
   tags: string | null
   from_address: string
   from_name: string | null
+  sender: string | null
   subject: string
   received_at: string
   body_text?: string
@@ -52,7 +53,7 @@ export default function TaskTable({ tasks, onRowClick }: Props) {
         <thead>
           <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             <th className="px-4 py-2.5 font-semibold">Received</th>
-            <th className="px-4 py-2.5 font-semibold">From</th>
+            <th className="px-4 py-2.5 font-semibold">Sender</th>
             <th className="px-4 py-2.5 font-semibold">Category</th>
             <th className="px-4 py-2.5 font-semibold">Tags</th>
             <th className="px-4 py-2.5 font-semibold">Summary</th>
@@ -72,8 +73,8 @@ export default function TaskTable({ tasks, onRowClick }: Props) {
               <td className="px-4 py-3 text-slate-400 dark:text-slate-400 whitespace-nowrap text-xs font-mono">
                 {format(new Date(task.received_at), 'd MMM yy')}
               </td>
-              <td className="px-4 py-3 max-w-[140px] truncate text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" title={task.from_address}>
-                {task.from_name || task.from_address}
+              <td className="px-4 py-3 max-w-[160px] truncate text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" title={task.from_address}>
+                {task.sender || task.from_name || task.from_address}
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-1">
