@@ -16,7 +16,7 @@ export default function Login() {
     setLoading(true)
     try {
       await login(email, password)
-      navigate('/familyhub')
+      navigate('/')
     } catch {
       setError('Invalid email or password')
     } finally {

@@ -51,7 +51,7 @@ export default function Dashboard() {
 
   function handleLogout() {
     logout()
-    navigate('/familyhub/login')
+    navigate('/login')
   }
 
   const actionTasks = tasks.filter(t => !t.is_fyi_only && t.status !== 'done')

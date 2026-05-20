@@ -1,23 +1,23 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
-  return user ? <>{children}</> : <Navigate to="/familyhub/login" replace />
+  return user ? <>{children}</> : <Navigate to="/login" replace />
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/familyhub/login" element={<Login />} />
-          <Route path="/familyhub/*" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="*" element={<Navigate to="/familyhub" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/*" element={<RequireAuth><Dashboard /></RequireAuth>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   )
 }

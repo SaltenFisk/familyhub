@@ -14,7 +14,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('fh_token')
       localStorage.removeItem('fh_user')
-      window.location.href = '/familyhub/login'
+      window.location.hash = '#/login'
     }
     return Promise.reject(err)
   }
