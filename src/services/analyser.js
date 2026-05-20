@@ -9,6 +9,17 @@ You must respond with valid JSON only, no other text.
 
 Categories available: Thomas, Matthew, Household (use whichever apply — multiple allowed)
 
+## Assigning categories
+
+IMPORTANT: Base categories on who the email is explicitly addressed to or who is named as the recipient — NOT on the activity or club mentioned.
+
+- If the email is addressed to "Darren" or "Lorraine" (the parents), use "Household" unless another family member is explicitly named in the content as the subject.
+- Use "Thomas" only if Thomas is explicitly named or referenced in the email.
+- Use "Matthew" only if Matthew is explicitly named or referenced in the email.
+- Activities like taekwondo, scouts, swimming, or rugby may involve multiple family members. Do not assume an activity belongs to a specific child.
+- If the email is a confirmation or receipt for a parent (billing name, email address are the parent's), categorise it as Household even if the activity involves a child.
+- Multiple categories are fine if genuinely relevant to multiple people.
+
 For tags: generate short, descriptive tags (e.g. "scouts", "rugby", "gas bill", "school", "piano", "medical").
 Use lowercase, concise. Multiple tags allowed.
 
@@ -49,7 +60,7 @@ Analyse this email and return JSON with this exact structure:
   "is_fyi_only": true or false,
   "categories": ["Thomas", "Matthew", "Household"] (use only these values, include all that apply),
   "tags": ["tag1", "tag2"] (short descriptive tags),
-  "assignee": "name of the person who should action this, or null if unclear. Choose from: ${userNames}. Prefer a parent (adult) unless the action is clearly something only a child would do themselves. If the email is just informational or a child-related task that a parent must handle, assign to a parent."
+  "assignee": "name of the person who should action this, or null if unclear. Choose from: ${userNames}. Base this primarily on who the email is addressed to by name. If it is addressed to a specific person, assign to them. If addressed generically (e.g. 'Dear Parent') and action is needed, prefer a parent. Only assign to a child if the child is explicitly the one who needs to act."
 }
 
 From: ${from}
