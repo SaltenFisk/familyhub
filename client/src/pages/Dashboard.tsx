@@ -20,7 +20,7 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string
   { id: 'matthew', label: 'Matthew', icon: <User size={16} />, category: 'Matthew' },
 ]
 
-function TaskPanel({ title, tasks, onRowClick, showAction = false, showEvent = false }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void; showAction?: boolean; showEvent?: boolean }) {
+function TaskPanel({ title, tasks, onRowClick, onDismiss, showAction = false, showEvent = false }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void; onDismiss?: (t: Task) => void; showAction?: boolean; showEvent?: boolean }) {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
       <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
@@ -28,7 +28,7 @@ function TaskPanel({ title, tasks, onRowClick, showAction = false, showEvent = f
         <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-full px-2.5 py-0.5 font-medium">{tasks.length}</span>
       </div>
       <div className="p-4">
-        <TaskTable tasks={tasks} onRowClick={onRowClick} showAction={showAction} showEvent={showEvent} />
+        <TaskTable tasks={tasks} onRowClick={onRowClick} onDismiss={onDismiss} showAction={showAction} showEvent={showEvent} />
       </div>
     </div>
   )
@@ -62,6 +62,11 @@ export default function Dashboard() {
   const actionTasks = tasks.filter(t => !t.is_fyi_only && !t.is_upcoming && t.status !== 'done')
   const upcomingTasks = tasks.filter(t => t.is_upcoming && t.event_date && new Date(t.event_date) >= today)
   const fyiTasks = tasks.filter(t => t.is_fyi_only)
+
+  async function handleDismiss(task: Task) {
+    await api.delete(`/tasks/${task.id}`)
+    setTasks(prev => prev.filter(t => t.id !== task.id))
+  }
 
   async function handleEmailClick(emailId: number) {
     const r = await api.get(`/emails/${emailId}`)
@@ -131,9 +136,9 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <TaskPanel title="Actions Required" tasks={actionTasks} onRowClick={setSelectedTask} showAction />
-            <TaskPanel title="Upcoming" tasks={upcomingTasks} onRowClick={setSelectedTask} showEvent />
-            <TaskPanel title="Info" tasks={fyiTasks} onRowClick={setSelectedTask} />
+            <TaskPanel title="Actions Required" tasks={actionTasks} onRowClick={setSelectedTask} onDismiss={handleDismiss} showAction />
+            <TaskPanel title="Upcoming" tasks={upcomingTasks} onRowClick={setSelectedTask} onDismiss={handleDismiss} showEvent />
+            <TaskPanel title="Info" tasks={fyiTasks} onRowClick={setSelectedTask} onDismiss={handleDismiss} />
 
             {activeTab === 'home' && (
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">

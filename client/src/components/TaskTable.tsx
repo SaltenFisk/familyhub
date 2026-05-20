@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, X } from 'lucide-react'
 import Badge from './Badge'
 
 export interface Task {
@@ -43,11 +43,12 @@ const statusColour: Record<string, 'gray' | 'amber' | 'green' | 'orange'> = {
 interface Props {
   tasks: Task[]
   onRowClick: (task: Task) => void
+  onDismiss?: (task: Task) => void
   showAction?: boolean
   showEvent?: boolean
 }
 
-export default function TaskTable({ tasks, onRowClick, showAction = false, showEvent = false }: Props) {
+export default function TaskTable({ tasks, onRowClick, onDismiss, showAction = false, showEvent = false }: Props) {
   if (tasks.length === 0) {
     return <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center">No tasks</p>
   }
@@ -69,6 +70,7 @@ export default function TaskTable({ tasks, onRowClick, showAction = false, showE
             {!showEvent && <th className="px-4 py-2.5 font-semibold">Assignee</th>}
             <th className="px-4 py-2.5 font-semibold">Status</th>
             <th className="px-4 py-2.5 font-semibold">Comments</th>
+            {onDismiss && <th className="px-2 py-2.5" />}
           </tr>
         </thead>
         <tbody>
@@ -132,6 +134,17 @@ export default function TaskTable({ tasks, onRowClick, showAction = false, showE
                   <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>
                 )}
               </td>
+              {onDismiss && (
+                <td className="px-2 py-3">
+                  <button
+                    onClick={e => { e.stopPropagation(); onDismiss(task) }}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                    title="Dismiss"
+                  >
+                    <X size={14} />
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

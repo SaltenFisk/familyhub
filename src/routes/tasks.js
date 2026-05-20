@@ -115,6 +115,17 @@ router.patch('/:id', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// DELETE /tasks/:id — hard delete task (email is preserved)
+router.delete('/:id', requireAdmin, async (req, res) => {
+  const task = (await db.query('SELECT id FROM tasks WHERE id = ?', [req.params.id]))[0][0];
+  if (!task) return res.status(404).json({ error: 'Not found' });
+  await db.query('DELETE FROM comments WHERE task_id = ?', [req.params.id]);
+  await db.query('DELETE FROM task_tags WHERE task_id = ?', [req.params.id]);
+  await db.query('DELETE FROM task_categories WHERE task_id = ?', [req.params.id]);
+  await db.query('DELETE FROM tasks WHERE id = ?', [req.params.id]);
+  res.json({ ok: true });
+});
+
 // POST /tasks/:id/comments
 router.post('/:id/comments', requireAuth, async (req, res) => {
   const { body } = req.body;
