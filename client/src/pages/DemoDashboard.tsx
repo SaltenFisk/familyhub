@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { LogOut, Home, User, Sun, Moon, Check, Send, X, ChevronDown } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
-import FeedbackModal from '../components/FeedbackModal'
+import AboutModal from '../components/AboutModal'
 import Badge from '../components/Badge'
 import { format } from 'date-fns'
 import * as Dialog from '@radix-ui/react-dialog'
@@ -95,7 +95,7 @@ export default function DemoDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">{DEMO_USER.name}</span>
-            <FeedbackModal />
+            <AboutModal />
             <button onClick={toggle} className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" aria-label="Toggle theme">
               {dark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
