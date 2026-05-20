@@ -167,12 +167,12 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     <Dialog.Root open={open} onOpenChange={o => !o && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 z-40" />
-        <Dialog.Content className="fixed inset-x-4 top-4 bottom-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[720px] md:top-8 md:bottom-8 bg-white rounded-xl shadow-xl z-50 flex flex-col overflow-hidden">
+        <Dialog.Content className="fixed inset-x-4 top-4 bottom-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[720px] md:top-8 md:bottom-8 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 flex flex-col overflow-hidden">
 
           {/* Header */}
-          <div className="flex items-start justify-between p-4 border-b border-gray-200">
+          <div className="flex items-start justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex-1 min-w-0 pr-4">
-              <Dialog.Title className="font-semibold text-gray-800 text-sm leading-tight truncate">
+              <Dialog.Title className="font-semibold text-gray-800 dark:text-white text-sm leading-tight truncate">
                 {data?.subject || '(no subject)'}
               </Dialog.Title>
               <p className="text-xs text-gray-500 mt-0.5">
@@ -194,7 +194,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
 
           {/* Summary / action / assignee */}
           {data && task && task.id > 0 && (
-            <div className="p-4 border-b border-gray-100 bg-gray-50 space-y-2 text-xs">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 space-y-2 text-xs">
               {data.summary && <p><span className="font-medium text-gray-600">Summary:</span> {data.summary}</p>}
               {data.action && <p><span className="font-medium text-gray-600">Action:</span> {data.action}</p>}
               {data.due_date && <p><span className="font-medium text-gray-600">Due:</span> {data.due_date}</p>}
@@ -273,7 +273,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
 
           {/* Comments — only for real tasks */}
           {task && task.id > 0 && (
-            <div className="border-t border-gray-200 bg-gray-50 px-4 py-3 space-y-3 max-h-48 overflow-y-auto">
+            <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 space-y-3 max-h-48 overflow-y-auto">
               {comments.length === 0 && (
                 <p className="text-xs text-gray-400 text-center py-1">No comments yet</p>
               )}
@@ -313,7 +313,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
 
           {/* Status / outcome controls — only for real tasks */}
           {task && task.id > 0 && (
-            <div className="p-4 border-t border-gray-200 bg-white space-y-3">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 space-y-3">
               <div className="flex items-center gap-3">
                 <label className="text-xs font-medium text-gray-600">Status:</label>
                 <div className="flex gap-2">

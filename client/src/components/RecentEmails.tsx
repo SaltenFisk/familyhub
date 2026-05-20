@@ -41,10 +41,10 @@ export default function RecentEmails({ onEmailClick }: Props) {
           <button
             key={email.id}
             onClick={() => onEmailClick(email.id)}
-            className="w-full text-left px-0 py-3 hover:bg-blue-50 transition-colors flex items-start gap-3 group"
+            className="w-full text-left px-0 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors flex items-start gap-3 group"
           >
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-800 truncate group-hover:text-blue-700">
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate group-hover:text-blue-700">
                 {email.subject || '(no subject)'}
               </p>
               <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -59,7 +59,7 @@ export default function RecentEmails({ onEmailClick }: Props) {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
