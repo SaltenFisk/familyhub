@@ -36,7 +36,10 @@ CREATE TABLE emails (
   body_html LONGTEXT,
   raw_headers TEXT,
   processed BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  norm_subject VARCHAR(1000),   -- normalised subject (Fwd:/Re: stripped) for dedup
+  original_from VARCHAR(512),   -- original sender extracted from forwarded body
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_dedup (norm_subject(255), original_from(255))
 );
 
 CREATE TABLE tasks (
