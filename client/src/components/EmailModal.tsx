@@ -259,13 +259,21 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
           <div className="flex-1 overflow-y-auto p-4 min-h-0">
             {data?.body_html ? (
               <iframe
-                srcDoc={data.body_html}
+                srcDoc={`<style>
+                  html,body{background:#0f172a!important;color:#cbd5e1!important;font-family:Inter,sans-serif;font-size:13px;line-height:1.6;margin:0;padding:8px}
+                  a{color:#fb923c!important}
+                  *{color:inherit!important;background-color:transparent!important;border-color:#334155!important}
+                  img{max-width:100%;height:auto}
+                  table{border-collapse:collapse;width:100%}
+                  td,th{padding:4px 8px;vertical-align:top}
+                  blockquote{border-left:2px solid #475569;margin-left:0;padding-left:12px;color:#94a3b8!important}
+                </style>${data.body_html}`}
                 className="w-full h-full border-0 min-h-[200px]"
                 sandbox="allow-same-origin"
                 title="Email body"
               />
             ) : (
-              <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+              <pre className="text-xs text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
                 {data?.body_text || 'No content'}
               </pre>
             )}
