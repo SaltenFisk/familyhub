@@ -19,10 +19,8 @@ async function pollMailbox() {
     await client.connect();
     const lock = await client.getMailboxLock('INBOX');
     try {
-      // Fetch unseen messages
+      // Fetch all messages — deduplicate via message_id in DB, not \Seen flag
       for await (const msg of client.fetch('1:*', { envelope: true, source: true, flags: true })) {
-        if (msg.flags.has('\\Seen')) continue;
-
         const parsed = await simpleParser(msg.source);
         const messageId = parsed.messageId || `${msg.uid}@familyhub`;
 
