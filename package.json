@@ -1,0 +1,32 @@
+{
+  "name": "familyhub",
+  "version": "1.0.0",
+  "description": "Family administration hub",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "build:client": "cd client && npm run build",
+    "build": "npm run build:client",
+    "deploy": "npm run build && npm start"
+  },
+  "keywords": [],
+  "author": "Darren Johnston",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.97.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "imapflow": "^1.3.3",
+    "jsonwebtoken": "^9.0.3",
+    "mailparser": "^3.9.8",
+    "mysql2": "^3.22.3",
+    "node-cron": "^4.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

@@ -1,0 +1,24 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: hyperion.hostns.io
+          username: u63375
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /home/saltenfisk/apps/familyhub
+            git pull origin main
+            npm install --production
+            cd client && npm install && npm run build && cd ..
+            pm2 reload ecosystem.config.js --env production
+            echo "Deploy complete"
