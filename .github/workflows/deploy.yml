@@ -16,9 +16,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
+            source ~/.nvm/nvm.sh 2>/dev/null || source ~/nodevenv/familyhub/22/bin/activate 2>/dev/null || true
             cd /home/u63375/familyhub
             git pull origin main
             npm install --production
-            cd client && npm install && npm run build && cd ..
-            pm2 reload ecosystem.config.js --env production
+            mkdir -p tmp && touch tmp/restart.txt
             echo "Deploy complete"
