@@ -16,7 +16,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
-            cd /home/saltenfisk/apps/familyhub
+            cd /home/saltenfisk/familyhub
             git pull origin main
             npm install --production
             cd client && npm install && npm run build && cd ..
