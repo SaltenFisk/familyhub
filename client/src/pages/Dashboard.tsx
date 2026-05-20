@@ -156,7 +156,17 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <EmailModal task={selectedTask} onClose={() => setSelectedTask(null)} />
+      <EmailModal
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onUpdated={() => {
+          setSelectedTask(null)
+          setActiveTab(t => t) // trigger re-fetch
+          const params: Record<string, string> = {}
+          if (currentTab.category) params.category = currentTab.category
+          api.get('/tasks', { params }).then(r => setTasks(r.data))
+        }}
+      />
     </div>
   )
 }
