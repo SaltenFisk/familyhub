@@ -103,13 +103,26 @@ async function pollMailbox() {
     console.error('IMAP poll error:', err.message);
   }
 
-  // Analyse after IMAP connection is closed
+  // Analyse new emails
   for (const emailId of newEmailIds) {
     try {
       const taskId = await analyseEmail(emailId);
       console.log(`Email ${emailId} → task ${taskId}`);
     } catch (err) {
       console.error(`Analysis failed for email ${emailId}:`, err.message);
+    }
+  }
+
+  // Retry any previously stored emails that failed analysis
+  const [unprocessed] = await db.query(
+    'SELECT id FROM emails WHERE processed = 0 AND id NOT IN (SELECT email_id FROM tasks)'
+  ).catch(() => [[]]);
+  for (const { id } of unprocessed) {
+    try {
+      const taskId = await analyseEmail(id);
+      console.log(`Retried email ${id} → task ${taskId}`);
+    } catch (err) {
+      console.error(`Retry failed for email ${id}:`, err.message);
     }
   }
 }
