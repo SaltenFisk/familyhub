@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 interface ThemeCtx { dark: boolean; toggle: () => void }
-const ThemeContext = createContext<ThemeCtx>({ dark: false, toggle: () => {} })
+const ThemeContext = createContext<ThemeCtx>({ dark: true, toggle: () => {} })
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [dark, setDark] = useState(() => localStorage.getItem('fh_theme') === 'dark')
+  const [dark, setDark] = useState(() => localStorage.getItem('fh_theme') !== 'light')
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)

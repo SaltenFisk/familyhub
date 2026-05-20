@@ -2,16 +2,40 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-slate-950: #0f172a;
+  --color-slate-900: #0f172a;
+  --color-slate-800: #1e293b;
+  --color-slate-700: #334155;
+  --color-slate-600: #475569;
+  --color-slate-400: #94a3b8;
+  --color-slate-300: #cbd5e1;
+  --color-orange-500: #f97316;
+  --color-orange-400: #fb923c;
+  --color-orange-600: #ea580c;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
 @layer base {
-  * {
-    box-sizing: border-box;
+  * { box-sizing: border-box; }
+
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
   body {
     margin: 0;
-    font-family: system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
+    background-color: #0f172a;
+    color: #f1f5f9;
   }
-  #root {
-    min-height: 100svh;
+
+  /* Light mode overrides */
+  html:not(.dark) body {
+    background-color: #f8fafc;
+    color: #0f172a;
   }
+
+  #root { min-height: 100svh; }
 }

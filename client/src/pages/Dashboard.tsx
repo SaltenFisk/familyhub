@@ -11,18 +11,18 @@ import api from '../api/client'
 type TabId = 'home' | 'thomas' | 'matthew' | 'household'
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string }[] = [
-  { id: 'home', label: 'Home', icon: <Home size={18} /> },
-  { id: 'thomas', label: 'Thomas', icon: <User size={18} />, category: 'Thomas' },
-  { id: 'matthew', label: 'Matthew', icon: <User size={18} />, category: 'Matthew' },
-  { id: 'household', label: 'Household', icon: <Building2 size={18} />, category: 'Household' },
+  { id: 'home', label: 'Home', icon: <Home size={16} /> },
+  { id: 'thomas', label: 'Thomas', icon: <User size={16} />, category: 'Thomas' },
+  { id: 'matthew', label: 'Matthew', icon: <User size={16} />, category: 'Matthew' },
+  { id: 'household', label: 'Household', icon: <Building2 size={16} />, category: 'Household' },
 ]
 
 function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-        <h2 className="font-semibold text-gray-700 dark:text-gray-200 text-sm">{title}</h2>
-        <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 rounded-full px-2 py-0.5">{tasks.length}</span>
+    <div className="bg-slate-800 dark:bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-sm">
+      <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
+        <h2 className="font-semibold text-slate-100 text-sm tracking-wide">{title}</h2>
+        <span className="text-xs text-slate-400 bg-slate-700 rounded-full px-2.5 py-0.5 font-medium">{tasks.length}</span>
       </div>
       <div className="p-4">
         <TaskTable tasks={tasks} onRowClick={onRowClick} />
@@ -42,19 +42,18 @@ export default function Dashboard() {
 
   const currentTab = tabs.find(t => t.id === activeTab)!
 
-  useEffect(() => {
+  function loadTasks(tab = currentTab) {
     setLoading(true)
     const params: Record<string, string> = {}
-    if (currentTab.category) params.category = currentTab.category
+    if (tab.category) params.category = tab.category
     api.get('/tasks', { params })
       .then(r => setTasks(r.data))
       .finally(() => setLoading(false))
-  }, [activeTab])
-
-  function handleLogout() {
-    logout()
-    navigate('/login')
   }
+
+  useEffect(() => { loadTasks(currentTab) }, [activeTab])
+
+  function handleLogout() { logout(); navigate('/login') }
 
   const actionTasks = tasks.filter(t => !t.is_fyi_only && t.status !== 'done')
   const fyiTasks = tasks.filter(t => t.is_fyi_only)
@@ -73,33 +72,38 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors">
+    <div className="min-h-screen bg-slate-950 dark:bg-slate-950 flex flex-col" style={{ backgroundColor: dark ? '#0f172a' : '#f8fafc' }}>
+
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
+      <header className="bg-slate-800 dark:bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-lg" style={{ backgroundColor: dark ? '#1e293b' : '#ffffff', borderColor: dark ? '#334155' : '#e2e8f0' }}>
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
-          <h1 className="font-bold text-gray-800 dark:text-white text-base">FamilyHub</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-orange-500 font-bold text-lg tracking-tight">Family</span>
+            <span className="font-bold text-lg tracking-tight" style={{ color: dark ? '#f1f5f9' : '#0f172a' }}>Hub</span>
+          </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">{user?.name}</span>
-            <button onClick={toggle} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200">
-              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            <span className="text-sm hidden sm:block" style={{ color: dark ? '#94a3b8' : '#64748b' }}>{user?.name}</span>
+            <button onClick={toggle} className="p-1.5 rounded-lg transition-colors hover:bg-slate-700" style={{ color: dark ? '#94a3b8' : '#64748b' }}>
+              {dark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <button onClick={handleLogout} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200">
-              <LogOut size={18} />
+            <button onClick={handleLogout} className="p-1.5 rounded-lg transition-colors hover:bg-slate-700" style={{ color: dark ? '#94a3b8' : '#64748b' }}>
+              <LogOut size={16} />
             </button>
           </div>
         </div>
 
         {/* Desktop tabs */}
-        <div className="hidden md:flex max-w-7xl mx-auto px-4 gap-1 pb-0">
+        <div className="hidden md:flex max-w-7xl mx-auto px-4 gap-0">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  ? 'border-orange-500 text-orange-500'
+                  : 'border-transparent hover:border-slate-600'
               }`}
+              style={{ color: activeTab === tab.id ? '#f97316' : dark ? '#94a3b8' : '#64748b' }}
             >
               {tab.icon} {tab.label}
             </button>
@@ -108,10 +112,10 @@ export default function Dashboard() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 pb-24 md:pb-6 space-y-6">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 pb-24 md:pb-6 space-y-5">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
           </div>
         ) : (
           <>
@@ -119,9 +123,9 @@ export default function Dashboard() {
             <TaskPanel title="FYI Only" tasks={fyiTasks} onRowClick={setSelectedTask} />
 
             {activeTab === 'home' && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                  <h2 className="font-semibold text-gray-700 dark:text-gray-200 text-sm">Recent Emails</h2>
+              <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-sm" style={{ backgroundColor: dark ? '#1e293b' : '#ffffff', borderColor: dark ? '#334155' : '#e2e8f0' }}>
+                <div className="px-4 py-3 border-b border-slate-700" style={{ borderColor: dark ? '#334155' : '#e2e8f0' }}>
+                  <h2 className="font-semibold text-sm tracking-wide" style={{ color: dark ? '#f1f5f9' : '#0f172a' }}>Recent Emails</h2>
                 </div>
                 <div className="p-4">
                   <RecentEmails onEmailClick={handleEmailClick} />
@@ -133,15 +137,14 @@ export default function Dashboard() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-30">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 border-t z-30" style={{ backgroundColor: dark ? '#1e293b' : '#ffffff', borderColor: dark ? '#334155' : '#e2e8f0' }}>
         <div className="flex">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors ${
-                activeTab === tab.id ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'
-              }`}
+              className="flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors"
+              style={{ color: activeTab === tab.id ? '#f97316' : dark ? '#64748b' : '#94a3b8' }}
             >
               {tab.icon}
               {tab.label}
@@ -155,9 +158,7 @@ export default function Dashboard() {
         onClose={() => setSelectedTask(null)}
         onUpdated={() => {
           setSelectedTask(null)
-          const params: Record<string, string> = {}
-          if (currentTab.category) params.category = currentTab.category
-          api.get('/tasks', { params }).then(r => setTasks(r.data))
+          loadTasks()
         }}
       />
     </div>
