@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Home, User, Building2, Sun, Moon } from 'lucide-react'
+import { LogOut, Home, User, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
@@ -10,13 +10,14 @@ import FeedbackModal from '../components/FeedbackModal'
 import ApiErrorBanner from '../components/ApiErrorBanner'
 import api from '../api/client'
 
-type TabId = 'home' | 'thomas' | 'matthew' | 'household'
+type TabId = 'home' | 'darren' | 'lorraine' | 'thomas' | 'matthew'
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string }[] = [
   { id: 'home', label: 'Home', icon: <Home size={16} /> },
+  { id: 'darren', label: 'Darren', icon: <User size={16} />, category: 'Darren' },
+  { id: 'lorraine', label: 'Lorraine', icon: <User size={16} />, category: 'Lorraine' },
   { id: 'thomas', label: 'Thomas', icon: <User size={16} />, category: 'Thomas' },
   { id: 'matthew', label: 'Matthew', icon: <User size={16} />, category: 'Matthew' },
-  { id: 'household', label: 'Household', icon: <Building2 size={16} />, category: 'Household' },
 ]
 
 function TaskPanel({ title, tasks, onRowClick, showAction = false }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void; showAction?: boolean }) {

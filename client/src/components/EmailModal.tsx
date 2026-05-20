@@ -43,8 +43,10 @@ const statusOptions = [
   { value: 'done', label: 'Done' },
 ]
 
-const categoryColour: Record<string, 'blue' | 'purple' | 'green'> = {
-  Thomas: 'blue', Matthew: 'purple', Household: 'green',
+const ALL_WHO = ['Darren', 'Lorraine', 'Thomas', 'Matthew'] as const
+
+const categoryColour: Record<string, 'blue' | 'purple' | 'green' | 'amber'> = {
+  Darren: 'green', Lorraine: 'amber', Thomas: 'blue', Matthew: 'purple',
 }
 
 export default function EmailModal({ task, onClose, onUpdated }: Props) {
@@ -55,6 +57,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   const [assigneeId, setAssigneeId] = useState<string>('')
   const [status, setStatus] = useState<string>('pending')
   const [isFyi, setIsFyi] = useState<boolean>(false)
+  const [whoList, setWhoList] = useState<string[]>([])
   const [outcome, setOutcome] = useState<string>('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -81,12 +84,14 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
         setAssigneeId(r.data.assignee_id?.toString() || '')
         setStatus(r.data.status || 'pending')
         setIsFyi(!!r.data.is_fyi_only)
+        setWhoList(r.data.categories ? r.data.categories.split(',').map((s: string) => s.trim()) : [])
         setOutcome(r.data.outcome || '')
       }).catch(() => {
         setFullTask(task)
         setAssigneeId(task.assignee_id?.toString() || '')
         setStatus(task.status || 'pending')
         setIsFyi(!!task.is_fyi_only)
+        setWhoList(task.categories ? task.categories.split(',').map(s => s.trim()) : [])
         setOutcome('')
       })
     } else {
@@ -158,7 +163,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     if (!task || task.id === 0) { onClose(); return }
     setSaving(true)
     try {
-      await api.patch(`/tasks/${task.id}`, { status, outcome, is_fyi_only: isFyi })
+      await api.patch(`/tasks/${task.id}`, { status, outcome, is_fyi_only: isFyi, categories: whoList })
       setSaved(true)
       onUpdated?.()
     } finally {
@@ -186,9 +191,31 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                 {data?.from_name ? `${data.from_name} <${data.from_address}>` : data?.from_address}
               </p>
               <div className="flex flex-wrap gap-1 mt-2">
-                {data?.categories?.split(',').map(c => (
-                  <Badge key={c} label={c.trim()} variant={categoryColour[c.trim()] || 'gray'} />
-                ))}
+                {task && task.id > 0 && isAdmin ? (
+                  ALL_WHO.map(name => {
+                    const active = whoList.includes(name)
+                    return (
+                      <button
+                        key={name}
+                        onClick={() => setWhoList(prev => active ? prev.filter(n => n !== name) : [...prev, name])}
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 transition-colors ${
+                          active
+                            ? `${categoryColour[name] === 'green' ? 'bg-emerald-100 text-emerald-700 ring-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:ring-emerald-500/30' :
+                               categoryColour[name] === 'amber' ? 'bg-amber-100 text-amber-700 ring-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:ring-amber-500/30' :
+                               categoryColour[name] === 'blue' ? 'bg-blue-100 text-blue-700 ring-blue-300 dark:bg-blue-500/20 dark:text-blue-300 dark:ring-blue-500/30' :
+                               'bg-purple-100 text-purple-700 ring-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:ring-purple-500/30'}`
+                            : 'bg-slate-100 text-slate-400 ring-slate-200 dark:bg-slate-700 dark:text-slate-500 dark:ring-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    )
+                  })
+                ) : (
+                  data?.categories?.split(',').map(c => (
+                    <Badge key={c} label={c.trim()} variant={categoryColour[c.trim()] ?? 'gray'} />
+                  ))
+                )}
                 {data?.tags?.split(',').map(t => (
                   <Badge key={t} label={t.trim()} variant="gray" />
                 ))}

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Home, User, Building2, Sun, Moon, Check, Send, X, ChevronDown } from 'lucide-react'
+import { LogOut, Home, User, Sun, Moon, Check, Send, X, ChevronDown } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
 import FeedbackModal from '../components/FeedbackModal'
@@ -9,17 +9,18 @@ import { format } from 'date-fns'
 import * as Dialog from '@radix-ui/react-dialog'
 import { DEMO_TASKS, DEMO_EMAILS, DEMO_EMAIL_BODIES, DEMO_USER, DEMO_FAMILY } from '../demo/mockData'
 
-type TabId = 'home' | 'hope' | 'charles' | 'household'
+type TabId = 'home' | 'bea' | 'mark' | 'hope' | 'charles'
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string }[] = [
   { id: 'home', label: 'Home', icon: <Home size={16} /> },
+  { id: 'bea', label: 'Bea', icon: <User size={16} />, category: 'Bea' },
+  { id: 'mark', label: 'Mark', icon: <User size={16} />, category: 'Mark' },
   { id: 'hope', label: 'Hope', icon: <User size={16} />, category: 'Hope' },
   { id: 'charles', label: 'Charles', icon: <User size={16} />, category: 'Charles' },
-  { id: 'household', label: 'Household', icon: <Building2 size={16} />, category: 'Household' },
 ]
 
-const categoryColour: Record<string, 'blue' | 'purple' | 'green'> = {
-  Hope: 'blue', Charles: 'purple', Household: 'green',
+const categoryColour: Record<string, 'blue' | 'purple' | 'green' | 'amber'> = {
+  Bea: 'green', Mark: 'amber', Hope: 'blue', Charles: 'purple',
 }
 
 function TaskPanel({ title, tasks, onRowClick, showAction = false }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void; showAction?: boolean }) {

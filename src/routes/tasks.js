@@ -70,9 +70,9 @@ router.get('/:id', requireAuth, async (req, res) => {
   res.json(rows[0]);
 });
 
-// PATCH /tasks/:id — update status, assignee, outcome
+// PATCH /tasks/:id — update status, assignee, outcome, categories
 router.patch('/:id', requireAuth, async (req, res) => {
-  const { status, assignee_id, outcome, is_fyi_only } = req.body;
+  const { status, assignee_id, outcome, is_fyi_only, categories } = req.body;
   const task = (await db.query('SELECT * FROM tasks WHERE id = ?', [req.params.id]))[0][0];
   if (!task) return res.status(404).json({ error: 'Not found' });
 
@@ -87,10 +87,25 @@ router.patch('/:id', requireAuth, async (req, res) => {
   if (assignee_id !== undefined && req.user.role === 'admin') updates.assignee_id = assignee_id;
   if (is_fyi_only !== undefined && req.user.role === 'admin') updates.is_fyi_only = is_fyi_only ? 1 : 0;
 
-  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nothing to update' });
+  if (Object.keys(updates).length > 0) {
+    const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+    await db.query(`UPDATE tasks SET ${fields} WHERE id = ?`, [...Object.values(updates), req.params.id]);
+  }
 
-  const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
-  await db.query(`UPDATE tasks SET ${fields} WHERE id = ?`, [...Object.values(updates), req.params.id]);
+  // Update categories (who) if provided — admin only
+  if (Array.isArray(categories) && req.user.role === 'admin') {
+    await db.query('DELETE FROM task_categories WHERE task_id = ?', [req.params.id]);
+    for (const name of categories) {
+      const [rows] = await db.query('SELECT id FROM categories WHERE name = ?', [name]);
+      if (rows[0]) {
+        await db.query('INSERT IGNORE INTO task_categories (task_id, category_id) VALUES (?, ?)', [req.params.id, rows[0].id]);
+      }
+    }
+  }
+
+  if (Object.keys(updates).length === 0 && !Array.isArray(categories)) {
+    return res.status(400).json({ error: 'Nothing to update' });
+  }
 
   res.json({ ok: true });
 });

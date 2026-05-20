@@ -25,10 +25,11 @@ export interface Task {
   latest_comment_by?: string | null
 }
 
-const categoryColour: Record<string, 'blue' | 'purple' | 'green'> = {
+const categoryColour: Record<string, 'blue' | 'purple' | 'green' | 'amber'> = {
+  Darren: 'green',
+  Lorraine: 'amber',
   Thomas: 'blue',
   Matthew: 'purple',
-  Household: 'green',
 }
 
 const statusColour: Record<string, 'gray' | 'amber' | 'green' | 'orange'> = {
@@ -55,7 +56,7 @@ export default function TaskTable({ tasks, onRowClick, showAction = false }: Pro
           <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             <th className="px-4 py-2.5 font-semibold">Received</th>
             <th className="px-4 py-2.5 font-semibold">Sender</th>
-            <th className="px-4 py-2.5 font-semibold">Category</th>
+            <th className="px-4 py-2.5 font-semibold">Who</th>
             <th className="px-4 py-2.5 font-semibold">Tags</th>
             <th className="px-4 py-2.5 font-semibold">{showAction ? 'Action' : 'Summary'}</th>
             <th className="px-4 py-2.5 font-semibold">Due</th>
@@ -80,7 +81,7 @@ export default function TaskTable({ tasks, onRowClick, showAction = false }: Pro
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-1">
                   {task.categories?.split(',').map(c => (
-                    <Badge key={c} label={c.trim()} variant={categoryColour[c.trim()] || 'gray'} />
+                    <Badge key={c} label={c.trim()} variant={categoryColour[c.trim()] ?? 'gray'} />
                   ))}
                 </div>
               </td>
