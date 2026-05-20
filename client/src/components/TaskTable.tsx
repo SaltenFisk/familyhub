@@ -9,6 +9,8 @@ export interface Task {
   action: string | null
   due_date: string | null
   is_fyi_only: boolean
+  is_upcoming: boolean
+  event_date: string | null
   status: string
   assignee_name: string | null
   categories: string | null
@@ -42,25 +44,29 @@ interface Props {
   tasks: Task[]
   onRowClick: (task: Task) => void
   showAction?: boolean
+  showEvent?: boolean
 }
 
-export default function TaskTable({ tasks, onRowClick, showAction = false }: Props) {
+export default function TaskTable({ tasks, onRowClick, showAction = false, showEvent = false }: Props) {
   if (tasks.length === 0) {
     return <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center">No tasks</p>
   }
 
   return (
     <div className="overflow-x-auto -mx-4 md:mx-0">
-      <table className="w-full text-sm min-w-[800px]">
+      <table className="w-full text-sm min-w-[700px]">
         <thead>
           <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             <th className="px-4 py-2.5 font-semibold">Received</th>
             <th className="px-4 py-2.5 font-semibold">Sender</th>
             <th className="px-4 py-2.5 font-semibold">Who</th>
             <th className="px-4 py-2.5 font-semibold">Tags</th>
-            <th className="px-4 py-2.5 font-semibold">{showAction ? 'Action' : 'Summary'}</th>
-            <th className="px-4 py-2.5 font-semibold">Due</th>
-            <th className="px-4 py-2.5 font-semibold">Assignee</th>
+            <th className="px-4 py-2.5 font-semibold">{showEvent ? 'Event' : showAction ? 'Action' : 'Summary'}</th>
+            {showEvent
+              ? <th className="px-4 py-2.5 font-semibold">Date</th>
+              : <th className="px-4 py-2.5 font-semibold">Due</th>
+            }
+            {!showEvent && <th className="px-4 py-2.5 font-semibold">Assignee</th>}
             <th className="px-4 py-2.5 font-semibold">Status</th>
             <th className="px-4 py-2.5 font-semibold">Comments</th>
           </tr>
@@ -94,17 +100,22 @@ export default function TaskTable({ tasks, onRowClick, showAction = false }: Pro
               </td>
               <td className="px-4 py-3 text-slate-600 dark:text-slate-300 max-w-[240px]">
                 <p className="line-clamp-2 text-xs leading-relaxed">
-                  {showAction ? (task.action || task.summary) : task.summary}
+                  {showEvent ? task.summary : showAction ? (task.action || task.summary) : task.summary}
                 </p>
               </td>
               <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-xs font-mono">
-                {task.due_date ? format(new Date(task.due_date), 'd MMM yy') : '—'}
+                {showEvent
+                  ? (task.event_date ? format(new Date(task.event_date), 'd MMM yy') : '—')
+                  : (task.due_date ? format(new Date(task.due_date), 'd MMM yy') : '—')
+                }
               </td>
-              <td className="px-4 py-3 text-xs whitespace-nowrap">
-                {task.assignee_name
-                  ? <span className="text-slate-600 dark:text-slate-300">{task.assignee_name}</span>
-                  : <Badge label="Unassigned" variant="orange" />}
-              </td>
+              {!showEvent && (
+                <td className="px-4 py-3 text-xs whitespace-nowrap">
+                  {task.assignee_name
+                    ? <span className="text-slate-600 dark:text-slate-300">{task.assignee_name}</span>
+                    : <Badge label="Unassigned" variant="orange" />}
+                </td>
+              )}
               <td className="px-4 py-3">
                 <Badge label={task.status.replace('_', ' ')} variant={statusColour[task.status] || 'gray'} />
               </td>

@@ -20,7 +20,7 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string
   { id: 'matthew', label: 'Matthew', icon: <User size={16} />, category: 'Matthew' },
 ]
 
-function TaskPanel({ title, tasks, onRowClick, showAction = false }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void; showAction?: boolean }) {
+function TaskPanel({ title, tasks, onRowClick, showAction = false, showEvent = false }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void; showAction?: boolean; showEvent?: boolean }) {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
       <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
@@ -28,7 +28,7 @@ function TaskPanel({ title, tasks, onRowClick, showAction = false }: { title: st
         <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-full px-2.5 py-0.5 font-medium">{tasks.length}</span>
       </div>
       <div className="p-4">
-        <TaskTable tasks={tasks} onRowClick={onRowClick} showAction={showAction} />
+        <TaskTable tasks={tasks} onRowClick={onRowClick} showAction={showAction} showEvent={showEvent} />
       </div>
     </div>
   )
@@ -58,7 +58,9 @@ export default function Dashboard() {
 
   function handleLogout() { logout(); navigate('/login') }
 
-  const actionTasks = tasks.filter(t => !t.is_fyi_only && t.status !== 'done')
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const actionTasks = tasks.filter(t => !t.is_fyi_only && !t.is_upcoming && t.status !== 'done')
+  const upcomingTasks = tasks.filter(t => t.is_upcoming && t.event_date && new Date(t.event_date) >= today)
   const fyiTasks = tasks.filter(t => t.is_fyi_only)
 
   async function handleEmailClick(emailId: number) {
@@ -66,7 +68,7 @@ export default function Dashboard() {
     const email = r.data
     setSelectedTask({
       id: 0, email_id: emailId, summary: '', action: null, due_date: null,
-      is_fyi_only: true, status: 'pending', assignee_name: null,
+      is_fyi_only: true, is_upcoming: false, event_date: null, status: 'pending', assignee_name: null,
       categories: null, tags: null, sender: email.sender || null,
       from_address: email.from_address, from_name: email.from_name,
       subject: email.subject, received_at: email.received_at,
@@ -130,7 +132,8 @@ export default function Dashboard() {
         ) : (
           <>
             <TaskPanel title="Actions Required" tasks={actionTasks} onRowClick={setSelectedTask} showAction />
-            <TaskPanel title="FYI Only" tasks={fyiTasks} onRowClick={setSelectedTask} />
+            <TaskPanel title="Upcoming" tasks={upcomingTasks} onRowClick={setSelectedTask} showEvent />
+            <TaskPanel title="Info" tasks={fyiTasks} onRowClick={setSelectedTask} />
 
             {activeTab === 'home' && (
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">

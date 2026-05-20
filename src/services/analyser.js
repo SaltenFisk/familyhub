@@ -26,40 +26,49 @@ IMPORTANT: Base categories on who is explicitly named or addressed in the email,
 For tags: generate short, descriptive tags (e.g. "scouts", "rugby", "gas bill", "school", "piano", "medical").
 Use lowercase, concise. Multiple tags allowed.
 
-## Deciding is_fyi_only vs actionable
+## Classifying emails: action, upcoming, or FYI
 
-Set is_fyi_only = true (no action needed) for:
-- Newsletters, updates, and general information emails
-- Receipts and payment confirmations (payment already made)
-- Booking or order confirmations (already booked)
+Every email is exactly one of three types. Set the flags accordingly:
+
+### is_upcoming = true (event to be aware of)
+Use when the email confirms or announces a specific future event with a date — something the family needs to show up for or remember:
+- A confirmed booking (camp, trip, appointment, match, concert, event)
+- A school trip or activity on a specific date
+- A reminder of an upcoming event already arranged
+- Set event_date to the date of the event (YYYY-MM-DD)
+- Set is_fyi_only = false, action = null when is_upcoming = true
+
+### is_fyi_only = true (information only, no event)
+Use when the email is purely informational with no specific future event date:
+- Newsletters, updates, general information
+- Receipts and payment confirmations (payment already made, no event)
 - Delivery notifications and shipping updates
-- Automated statements where no response is needed
-- Notifications that something has been processed or completed
+- Automated statements
 - Marketing and promotional emails
-- School/club newsletters and term updates
-- Any email where reading it is the only thing required
+- Notifications that something has been processed
 
-Set is_fyi_only = false (action required) only when the family must DO something specific:
+### is_fyi_only = false, is_upcoming = false (action required)
+Use only when the family must DO something specific:
 - A payment is due or overdue
 - A form must be signed and returned
 - A decision or booking must be made
 - A reply or response is explicitly requested
 - Consent is required
 - Attendance must be confirmed or declined
-- Something must be collected, dropped off, or arranged
 - A deadline is approaching and inaction has a consequence
 
-When in doubt, default to is_fyi_only = true. It is better to under-flag than to treat everything as urgent.
-
-If is_fyi_only is true, action must be null.`;
+When in doubt between action and FYI, default to is_fyi_only = true.
+If is_upcoming is true, set is_fyi_only = false and action = null.`;
 
 const USER_TEMPLATE = (subject, from, body, userNames) => `
 Analyse this email and return JSON with this exact structure:
 {
   "sender": "the organisation or person who sent this email (e.g. 'Thames Water', '3rd Hitchin Scouts', 'Mrs Clarke - Geography'). Use the real name, not the email address. If it is a person at an organisation, prefer the organisation name.",
   "summary": "1-2 sentence summary of what the email is about",
-  "action": "specific thing that needs to be done, or null if FYI only",
-  "due_date": "YYYY-MM-DD or null if no date mentioned",
+  "action": "specific thing that needs to be done, or null if FYI or upcoming",
+  "due_date": "YYYY-MM-DD or null — deadline by which an action must be completed",
+  "is_upcoming": true or false,
+  "event_date": "YYYY-MM-DD or null — the date of the event itself, only set when is_upcoming is true",
   "is_fyi_only": true or false,
   "categories": ["Darren", "Lorraine", "Thomas", "Matthew"] (use only these values, include all that apply),
   "tags": ["tag1", "tag2"] (short descriptive tags),
@@ -165,16 +174,21 @@ async function analyseEmail(emailId) {
     assigneeId = tagIds.find(t => t.defaultAssigneeId)?.defaultAssigneeId || null;
   }
 
+  const isUpcoming = analysis.is_upcoming ? 1 : 0;
+  const isFyi = isUpcoming ? 0 : (analysis.is_fyi_only ? 1 : 0);
+
   // Insert task
   const [taskResult] = await db.query(
-    `INSERT INTO tasks (email_id, summary, action, due_date, is_fyi_only, assignee_id)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO tasks (email_id, summary, action, due_date, is_fyi_only, is_upcoming, event_date, assignee_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       emailId,
       analysis.summary,
       analysis.action || null,
       analysis.due_date || null,
-      analysis.is_fyi_only ? 1 : 0,
+      isFyi,
+      isUpcoming,
+      analysis.event_date || null,
       assigneeId,
     ]
   );

@@ -14,6 +14,8 @@ interface Task {
   action: string | null
   due_date: string | null
   is_fyi_only: boolean
+  is_upcoming: boolean
+  event_date: string | null
   status: string
   assignee_id?: number | null
   assignee_name: string | null
@@ -57,6 +59,8 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   const [assigneeId, setAssigneeId] = useState<string>('')
   const [status, setStatus] = useState<string>('pending')
   const [isFyi, setIsFyi] = useState<boolean>(false)
+  const [isUpcoming, setIsUpcoming] = useState<boolean>(false)
+  const [eventDate, setEventDate] = useState<string>('')
   const [whoList, setWhoList] = useState<string[]>([])
   const [outcome, setOutcome] = useState<string>('')
   const [saving, setSaving] = useState(false)
@@ -84,6 +88,8 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
         setAssigneeId(r.data.assignee_id?.toString() || '')
         setStatus(r.data.status || 'pending')
         setIsFyi(!!r.data.is_fyi_only)
+        setIsUpcoming(!!r.data.is_upcoming)
+        setEventDate(r.data.event_date || '')
         setWhoList(r.data.categories ? r.data.categories.split(',').map((s: string) => s.trim()) : [])
         setOutcome(r.data.outcome || '')
       }).catch(() => {
@@ -91,6 +97,8 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
         setAssigneeId(task.assignee_id?.toString() || '')
         setStatus(task.status || 'pending')
         setIsFyi(!!task.is_fyi_only)
+        setIsUpcoming(!!task.is_upcoming)
+        setEventDate(task.event_date || '')
         setWhoList(task.categories ? task.categories.split(',').map(s => s.trim()) : [])
         setOutcome('')
       })
@@ -163,7 +171,14 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     if (!task || task.id === 0) { onClose(); return }
     setSaving(true)
     try {
-      await api.patch(`/tasks/${task.id}`, { status, outcome, is_fyi_only: isFyi, categories: whoList })
+      await api.patch(`/tasks/${task.id}`, {
+        status,
+        outcome,
+        is_fyi_only: isFyi,
+        is_upcoming: isUpcoming,
+        event_date: isUpcoming ? (eventDate || null) : null,
+        categories: whoList,
+      })
       setSaved(true)
       onUpdated?.()
     } finally {
@@ -367,29 +382,39 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
           {task && task.id > 0 && (
             <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-3">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</label>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => setIsFyi(false)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                        !isFyi ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                      }`}
-                    >
-                      Action
-                    </button>
-                    <button
-                      onClick={() => setIsFyi(true)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                        isFyi ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                      }`}
-                    >
-                      FYI
-                    </button>
+                    {([
+                      { label: 'Action', active: !isFyi && !isUpcoming, onClick: () => { setIsFyi(false); setIsUpcoming(false) } },
+                      { label: 'Upcoming', active: isUpcoming, onClick: () => { setIsFyi(false); setIsUpcoming(true) } },
+                      { label: 'Info', active: isFyi, onClick: () => { setIsFyi(true); setIsUpcoming(false) } },
+                    ] as const).map(btn => (
+                      <button
+                        key={btn.label}
+                        onClick={btn.onClick}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          btn.active ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                        }`}
+                      >
+                        {btn.label}
+                      </button>
+                    ))}
                   </div>
+                  {isUpcoming && (
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Event date:</label>
+                      <input
+                        type="date"
+                        value={eventDate}
+                        onChange={e => setEventDate(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  )}
                 </div>
 
-                {!isFyi && (
+                {!isFyi && !isUpcoming && (
                   <div className="flex items-center gap-3">
                     <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Status:</label>
                     <div className="flex gap-2">
@@ -411,7 +436,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                 )}
               </div>
 
-              {status === 'done' && (
+              {status === 'done' && !isUpcoming && (
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Outcome / notes</label>
                   <textarea
