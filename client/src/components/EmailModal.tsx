@@ -3,6 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { X, ChevronDown, Check, Send } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import api from '../api/client'
 import Badge from './Badge'
 
@@ -47,6 +48,7 @@ const categoryColour: Record<string, 'blue' | 'purple' | 'green'> = {
 
 export default function EmailModal({ task, onClose, onUpdated }: Props) {
   const { user } = useAuth()
+  const { dark } = useTheme()
   const [fullTask, setFullTask] = useState<Task | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [assigneeId, setAssigneeId] = useState<string>('')
@@ -167,12 +169,12 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     <Dialog.Root open={open} onOpenChange={o => !o && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 z-40" />
-        <Dialog.Content className="fixed inset-x-4 top-4 bottom-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[720px] md:top-8 md:bottom-8 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 z-50 flex flex-col overflow-hidden">
+        <Dialog.Content className="fixed inset-x-4 top-4 bottom-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[720px] md:top-8 md:bottom-8 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 flex flex-col overflow-hidden">
 
           {/* Header */}
-          <div className="flex items-start justify-between p-4 border-b border-slate-700">
+          <div className="flex items-start justify-between p-4 border-b border-slate-200 dark:border-slate-700">
             <div className="flex-1 min-w-0 pr-4">
-              <Dialog.Title className="font-semibold text-slate-100 text-sm leading-tight truncate">
+              <Dialog.Title className="font-semibold text-slate-900 dark:text-slate-100 text-sm leading-tight truncate">
                 {data?.subject || '(no subject)'}
               </Dialog.Title>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -188,16 +190,16 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
               </div>
             </div>
             <Dialog.Close asChild>
-              <button className="text-slate-500 hover:text-slate-300 shrink-0 transition-colors"><X size={20} /></button>
+              <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0 transition-colors"><X size={20} /></button>
             </Dialog.Close>
           </div>
 
           {/* Summary / action / assignee */}
           {data && task && task.id > 0 && (
-            <div className="p-4 border-b border-slate-700 bg-slate-900/50 space-y-2 text-xs">
-              {data.summary && <p><span className="font-semibold text-slate-400 uppercase tracking-wider text-xs">Summary</span><br /><span className="text-slate-300 mt-0.5 block">{data.summary}</span></p>}
-              {data.action && <p><span className="font-semibold text-orange-400 uppercase tracking-wider text-xs">Action</span><br /><span className="text-slate-300 mt-0.5 block">{data.action}</span></p>}
-              {data.due_date && <p><span className="font-semibold text-slate-400 uppercase tracking-wider text-xs">Due</span><br /><span className="text-slate-300 mt-0.5 block">{data.due_date}</span></p>}
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 space-y-2 text-xs">
+              {data.summary && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Summary</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{data.summary}</span></p>}
+              {data.action && <p><span className="font-semibold text-orange-500 dark:text-orange-400 uppercase tracking-wider text-xs">Action</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{data.action}</span></p>}
+              {data.due_date && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Due</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{data.due_date}</span></p>}
 
               {/* Assignee badge with picker */}
               <div className="flex items-center gap-2 pt-1">
@@ -213,9 +215,9 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                     </button>
 
                     {showAssignPicker && (
-                      <div className="absolute top-7 left-0 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl z-10 w-52 overflow-hidden">
-                        <div className="px-3 py-2 border-b border-slate-700">
-                          <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                      <div className="absolute top-7 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-2xl z-10 w-52 overflow-hidden">
+                        <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">
+                          <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={makeDefault}
@@ -228,7 +230,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                         <div className="py-1">
                           <button
                             onClick={() => handleAssign('')}
-                            className="w-full text-left px-3 py-2 text-xs text-slate-500 italic hover:bg-slate-700"
+                            className="w-full text-left px-3 py-2 text-xs text-slate-400 dark:text-slate-500 italic hover:bg-slate-100 dark:hover:bg-slate-700"
                           >
                             Unassigned
                           </button>
@@ -236,7 +238,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                             <button
                               key={u.id}
                               onClick={() => handleAssign(u.id.toString())}
-                              className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-700 flex items-center justify-between transition-colors"
+                              className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-between transition-colors"
                             >
                               {u.name}
                               {assigneeId === u.id.toString() && <Check size={12} className="text-orange-400" />}
@@ -247,7 +249,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                     )}
                   </div>
                 ) : (
-                  <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-slate-700 text-slate-300">
+                  <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                     {currentAssigneeName || 'Unassigned'}
                   </span>
                 )}
@@ -259,21 +261,31 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
           <div className="flex-1 overflow-y-auto p-4 min-h-0">
             {data?.body_html ? (
               <iframe
-                srcDoc={`<style>
-                  html,body{background:#0f172a!important;color:#cbd5e1!important;font-family:Inter,sans-serif;font-size:13px;line-height:1.6;margin:0;padding:8px}
-                  a{color:#fb923c!important}
-                  *{color:inherit!important;background-color:transparent!important;border-color:#334155!important}
-                  img{max-width:100%;height:auto}
-                  table{border-collapse:collapse;width:100%}
-                  td,th{padding:4px 8px;vertical-align:top}
-                  blockquote{border-left:2px solid #475569;margin-left:0;padding-left:12px;color:#94a3b8!important}
-                </style>${data.body_html}`}
+                srcDoc={dark
+                  ? `<style>
+                      html,body{background:#0f172a!important;color:#cbd5e1!important;font-family:Inter,sans-serif;font-size:13px;line-height:1.6;margin:0;padding:8px}
+                      a{color:#fb923c!important}
+                      *{color:inherit!important;background-color:transparent!important;border-color:#334155!important}
+                      img{max-width:100%;height:auto}
+                      table{border-collapse:collapse;width:100%}
+                      td,th{padding:4px 8px;vertical-align:top}
+                      blockquote{border-left:2px solid #475569;margin-left:0;padding-left:12px;color:#94a3b8!important}
+                    </style>${data.body_html}`
+                  : `<style>
+                      html,body{background:#ffffff;color:#1e293b;font-family:Inter,sans-serif;font-size:13px;line-height:1.6;margin:0;padding:8px}
+                      a{color:#ea580c}
+                      img{max-width:100%;height:auto}
+                      table{border-collapse:collapse;width:100%}
+                      td,th{padding:4px 8px;vertical-align:top}
+                      blockquote{border-left:2px solid #cbd5e1;margin-left:0;padding-left:12px;color:#64748b}
+                    </style>${data.body_html}`
+                }
                 className="w-full h-full border-0 min-h-[200px]"
                 sandbox="allow-same-origin"
                 title="Email body"
               />
             ) : (
-              <pre className="text-xs text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
+              <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
                 {data?.body_text || 'No content'}
               </pre>
             )}
@@ -281,21 +293,21 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
 
           {/* Comments — only for real tasks */}
           {task && task.id > 0 && (
-            <div className="border-t border-slate-700 bg-slate-900/50 px-4 py-3 space-y-3 max-h-48 overflow-y-auto">
+            <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 space-y-3 max-h-48 overflow-y-auto">
               {comments.length === 0 && (
-                <p className="text-xs text-slate-500 text-center py-1">No comments yet</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-1">No comments yet</p>
               )}
               {comments.map(c => (
                 <div key={c.id} className="flex gap-2">
-                  <div className="shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-semibold text-orange-400">
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-semibold text-orange-500 dark:text-orange-400">
                     {c.user_name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xs font-medium text-slate-300">{c.user_name}</span>
-                      <span className="text-xs text-slate-500">{format(new Date(c.created_at), 'd MMM HH:mm')}</span>
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{c.user_name}</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">{format(new Date(c.created_at), 'd MMM HH:mm')}</span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{c.body}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">{c.body}</p>
                   </div>
                 </div>
               ))}
@@ -306,7 +318,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                   onChange={e => setNewComment(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && postComment()}
                   placeholder="Add a comment…"
-                  className="flex-1 border border-slate-600 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-800 text-slate-300 placeholder-slate-600"
+                  className="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-600 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
                 <button
                   onClick={postComment}
@@ -321,9 +333,9 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
 
           {/* Status / outcome controls — only for real tasks */}
           {task && task.id > 0 && (
-            <div className="p-4 border-t border-slate-700 bg-slate-800 space-y-3">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-3">
               <div className="flex items-center gap-3">
-                <label className="text-xs font-medium text-slate-400">Status:</label>
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Status:</label>
                 <div className="flex gap-2">
                   {statusOptions.map(o => (
                     <button
@@ -332,7 +344,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                         status === o.value
                           ? 'bg-orange-500 text-white'
-                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                       }`}
                     >
                       {o.label}
@@ -343,22 +355,22 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
 
               {status === 'done' && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Outcome / notes</label>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Outcome / notes</label>
                   <textarea
                     value={outcome}
                     onChange={e => setOutcome(e.target.value)}
                     placeholder="What was the result?"
                     rows={2}
-                    className="w-full bg-slate-900 border border-slate-600 text-slate-200 placeholder-slate-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
                   />
                 </div>
               )}
 
               <div className="flex items-center justify-between">
-                {saved && <p className="text-xs text-emerald-400">Saved</p>}
+                {saved && <p className="text-xs text-emerald-500 dark:text-emerald-400">Saved</p>}
                 <div className="flex gap-2 ml-auto">
                   <Dialog.Close asChild>
-                    <button className="px-3 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">Close</button>
+                    <button className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Close</button>
                   </Dialog.Close>
                   <button
                     onClick={handleSave}

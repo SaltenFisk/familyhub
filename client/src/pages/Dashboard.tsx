@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Home, User, Building2 } from 'lucide-react'
+import { LogOut, Home, User, Building2, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
 import EmailModal from '../components/EmailModal'
 import RecentEmails from '../components/RecentEmails'
@@ -18,10 +19,10 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string
 
 function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void }) {
   return (
-    <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-sm">
-      <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-        <h2 className="font-semibold text-slate-100 text-sm tracking-wide">{title}</h2>
-        <span className="text-xs text-slate-400 bg-slate-700 rounded-full px-2.5 py-0.5 font-medium">{tasks.length}</span>
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+      <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <h2 className="font-semibold text-slate-800 dark:text-slate-100 text-sm tracking-wide">{title}</h2>
+        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-full px-2.5 py-0.5 font-medium">{tasks.length}</span>
       </div>
       <div className="p-4">
         <TaskTable tasks={tasks} onRowClick={onRowClick} />
@@ -32,6 +33,7 @@ function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[];
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
+  const { dark, toggle } = useTheme()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<TabId>('home')
   const [tasks, setTasks] = useState<Task[]>([])
@@ -70,20 +72,27 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col">
 
       {/* Header */}
-      <header className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-lg">
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
           <div className="flex items-center gap-1">
             <span className="text-orange-500 font-bold text-lg tracking-tight">Family</span>
-            <span className="text-slate-100 font-bold text-lg tracking-tight">Hub</span>
+            <span className="text-slate-900 dark:text-slate-100 font-bold text-lg tracking-tight">Hub</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-400 hidden sm:block">{user?.name}</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">{user?.name}</span>
+            <button
+              onClick={toggle}
+              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {dark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
             <button
               onClick={handleLogout}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             >
               <LogOut size={16} />
             </button>
@@ -98,8 +107,8 @@ export default function Dashboard() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-orange-500 text-orange-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
+                  ? 'border-orange-500 text-orange-500'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
               }`}
             >
               {tab.icon} {tab.label}
@@ -120,9 +129,9 @@ export default function Dashboard() {
             <TaskPanel title="FYI Only" tasks={fyiTasks} onRowClick={setSelectedTask} />
 
             {activeTab === 'home' && (
-              <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-sm">
-                <div className="px-4 py-3 border-b border-slate-700">
-                  <h2 className="font-semibold text-slate-100 text-sm tracking-wide">Recent Emails</h2>
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+                  <h2 className="font-semibold text-slate-800 dark:text-slate-100 text-sm tracking-wide">Recent Emails</h2>
                 </div>
                 <div className="p-4">
                   <RecentEmails onEmailClick={handleEmailClick} />
@@ -134,14 +143,16 @@ export default function Dashboard() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-slate-800 border-t border-slate-700 z-30">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-30">
         <div className="flex">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-                activeTab === tab.id ? 'text-orange-400' : 'text-slate-500 hover:text-slate-300'
+                activeTab === tab.id
+                  ? 'text-orange-500'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
               {tab.icon}
