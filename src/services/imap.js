@@ -50,7 +50,8 @@ async function pollMailbox() {
     await client.connect();
     const lock = await client.getMailboxLock('INBOX');
     try {
-      for await (const msg of client.fetch('1:*', { envelope: true, source: true, flags: true })) {
+      const uids = await client.search({ unseen: true }, { uid: true });
+      for await (const msg of client.fetch(uids, { envelope: true, source: true }, { uid: true })) {
         const parsed = await simpleParser(msg.source);
         const messageId = parsed.messageId || `${msg.uid}@familyhub`;
 
