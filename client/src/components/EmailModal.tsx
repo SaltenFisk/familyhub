@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, ChevronDown, Check } from 'lucide-react'
+import { X, ChevronDown, Check, Send } from 'lucide-react'
+import { format } from 'date-fns'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
 import Badge from './Badge'
@@ -26,6 +27,7 @@ interface Task {
 }
 
 interface User { id: number; name: string; role: string }
+interface Comment { id: number; body: string; user_name: string; created_at: string }
 
 interface Props {
   task: Task | null
@@ -54,6 +56,9 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   const [saved, setSaved] = useState(false)
   const [showAssignPicker, setShowAssignPicker] = useState(false)
   const [makeDefault, setMakeDefault] = useState(false)
+  const [comments, setComments] = useState<Comment[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [postingComment, setPostingComment] = useState(false)
   const assignRef = useRef<HTMLDivElement>(null)
 
   const isAdmin = user?.role === 'admin'
@@ -88,6 +93,12 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     if (isAdmin) {
       api.get('/users').then(r => setUsers(r.data)).catch(() => {})
     }
+
+    if (task.id > 0) {
+      api.get(`/tasks/${task.id}/comments`).then(r => setComments(r.data)).catch(() => {})
+    } else {
+      setComments([])
+    }
   }, [task?.id])
 
   // Close assign picker when clicking outside
@@ -121,6 +132,19 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     const selectedUser = users.find(u => u.id.toString() === uid)
     setFullTask(prev => prev ? { ...prev, assignee_id: uid ? Number(uid) : null, assignee_name: selectedUser?.name || null } : prev)
     onUpdated?.()
+  }
+
+  async function postComment() {
+    if (!task || task.id === 0 || !newComment.trim()) return
+    setPostingComment(true)
+    try {
+      await api.post(`/tasks/${task.id}/comments`, { body: newComment.trim() })
+      setNewComment('')
+      const r = await api.get(`/tasks/${task.id}/comments`)
+      setComments(r.data)
+    } finally {
+      setPostingComment(false)
+    }
   }
 
   async function handleSave() {
@@ -246,6 +270,46 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
               </pre>
             )}
           </div>
+
+          {/* Comments — only for real tasks */}
+          {task && task.id > 0 && (
+            <div className="border-t border-gray-200 bg-gray-50 px-4 py-3 space-y-3 max-h-48 overflow-y-auto">
+              {comments.length === 0 && (
+                <p className="text-xs text-gray-400 text-center py-1">No comments yet</p>
+              )}
+              {comments.map(c => (
+                <div key={c.id} className="flex gap-2">
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700">
+                    {c.user_name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs font-medium text-gray-700">{c.user_name}</span>
+                      <span className="text-xs text-gray-400">{format(new Date(c.created_at), 'd MMM HH:mm')}</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{c.body}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="flex gap-2 pt-1">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && postComment()}
+                  placeholder="Add a comment…"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={postComment}
+                  disabled={postingComment || !newComment.trim()}
+                  className="p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
+                >
+                  <Send size={14} />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Status / outcome controls — only for real tasks */}
           {task && task.id > 0 && (
