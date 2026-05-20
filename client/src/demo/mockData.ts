@@ -2,6 +2,13 @@ import type { Task } from '../components/TaskTable'
 
 export const DEMO_USER = { id: 0, name: 'Demo User', email: 'demo@example.com', role: 'admin' as const }
 
+export const DEMO_FAMILY = [
+  { id: 1, name: 'Bea' },
+  { id: 2, name: 'Mark' },
+  { id: 3, name: 'Hope' },
+  { id: 4, name: 'Charles' },
+]
+
 export const DEMO_TASKS: Task[] = [
   {
     id: 1, email_id: 1,
@@ -9,12 +16,12 @@ export const DEMO_TASKS: Task[] = [
     action: 'Pay the outstanding water bill of £142.50 online or by phone',
     due_date: '2026-05-25',
     is_fyi_only: false, status: 'pending',
-    assignee_name: 'Alex',
+    assignee_name: 'Bea',
     categories: 'Household', tags: 'utilities,water bill',
     from_address: 'billing@waterco.example.com', from_name: 'Water Co',
     subject: 'Final Reminder – Account Balance Outstanding',
     received_at: '2026-05-19T08:14:00Z',
-    comment_count: 1, latest_comment: 'Set up direct debit to avoid this', latest_comment_by: 'Sam',
+    comment_count: 1, latest_comment: 'Set up direct debit to avoid this', latest_comment_by: 'Mark',
   },
   {
     id: 2, email_id: 2,
@@ -23,7 +30,7 @@ export const DEMO_TASKS: Task[] = [
     due_date: '2026-06-01',
     is_fyi_only: false, status: 'pending',
     assignee_name: null,
-    categories: 'Thomas', tags: 'scouts,camp,payment',
+    categories: 'Hope', tags: 'scouts,camp,payment',
     from_address: 'admin@scoutsgroup.example.com', from_name: 'Local Scouts',
     subject: 'Summer Camp 2026 – Deposit Required',
     received_at: '2026-05-18T10:32:00Z',
@@ -35,12 +42,12 @@ export const DEMO_TASKS: Task[] = [
     action: 'Sign and return consent form for the geography field trip',
     due_date: '2026-05-30',
     is_fyi_only: false, status: 'in_progress',
-    assignee_name: 'Sam',
-    categories: 'Thomas', tags: 'school,field trip,consent form',
+    assignee_name: 'Mark',
+    categories: 'Charles', tags: 'school,field trip,consent form',
     from_address: 'office@secondaryschool.example.com', from_name: 'Secondary School',
     subject: 'Year 9 Geography Field Trip – Consent Required',
     received_at: '2026-05-17T14:05:00Z',
-    comment_count: 2, latest_comment: 'Form is on the kitchen counter', latest_comment_by: 'Sam',
+    comment_count: 2, latest_comment: 'Form is on the kitchen counter', latest_comment_by: 'Mark',
   },
   {
     id: 4, email_id: 4,
@@ -48,7 +55,7 @@ export const DEMO_TASKS: Task[] = [
     action: 'Book boiler service appointment for 3 or 6 June',
     due_date: '2026-05-28',
     is_fyi_only: false, status: 'pending',
-    assignee_name: 'Alex',
+    assignee_name: 'Bea',
     categories: 'Household', tags: 'boiler,service,home',
     from_address: 'service@energyco.example.com', from_name: 'Energy Co',
     subject: 'Your Annual Boiler Service is Due',
@@ -62,7 +69,7 @@ export const DEMO_TASKS: Task[] = [
     due_date: '2026-06-10',
     is_fyi_only: false, status: 'pending',
     assignee_name: null,
-    categories: 'Matthew', tags: 'school,summer fair,volunteer',
+    categories: 'Hope', tags: 'school,summer fair,volunteer',
     from_address: 'office@primaryschool.example.com', from_name: 'Primary School',
     subject: 'Summer Fair 2026 – Volunteer Sign-up',
     received_at: '2026-05-15T11:45:00Z',
@@ -74,8 +81,8 @@ export const DEMO_TASKS: Task[] = [
     action: 'Note the change: piano lesson is Thursday 29 May at 4:30pm, not Tuesday',
     due_date: '2026-05-29',
     is_fyi_only: false, status: 'pending',
-    assignee_name: 'Sam',
-    categories: 'Matthew', tags: 'piano,lesson,schedule change',
+    assignee_name: 'Mark',
+    categories: 'Charles', tags: 'piano,lesson,schedule change',
     from_address: 'teacher@musiclessons.example.com', from_name: 'Music Teacher',
     subject: 'Piano Lesson Rescheduled – Thursday This Week',
     received_at: '2026-05-19T17:02:00Z',
@@ -87,7 +94,7 @@ export const DEMO_TASKS: Task[] = [
     action: 'Compare car insurance quotes before 15 July renewal',
     due_date: '2026-07-10',
     is_fyi_only: false, status: 'pending',
-    assignee_name: 'Alex',
+    assignee_name: 'Bea',
     categories: 'Household', tags: 'insurance,car,renewal',
     from_address: 'renewals@insuranceco.example.com', from_name: 'Insurance Co',
     subject: 'Your Car Insurance Renews on 15 July – Review Your Quote',
@@ -100,7 +107,7 @@ export const DEMO_TASKS: Task[] = [
     action: null,
     due_date: null,
     is_fyi_only: true, status: 'pending',
-    assignee_name: 'Alex',
+    assignee_name: 'Bea',
     categories: 'Household', tags: 'tax,refund',
     from_address: 'noreply@taxauthority.example.com', from_name: 'Tax Authority',
     subject: 'Self Assessment – Tax Return Received',
@@ -114,7 +121,7 @@ export const DEMO_TASKS: Task[] = [
     due_date: null,
     is_fyi_only: true, status: 'pending',
     assignee_name: null,
-    categories: 'Thomas', tags: 'rugby,newsletter,presentation',
+    categories: 'Charles', tags: 'rugby,newsletter,presentation',
     from_address: 'news@rugbyclub.example.com', from_name: 'Rugby Club',
     subject: 'May Newsletter – Presentation Evening & Summer Training',
     received_at: '2026-05-12T09:00:00Z',
@@ -150,7 +157,7 @@ export const DEMO_EMAILS = [
 
 export const DEMO_EMAIL_BODIES: Record<number, { body_text: string }> = {
   1: { body_text: `Dear Customer,\n\nThis is a final reminder that your account has an outstanding balance of £142.50.\n\nPayment is now overdue and must be received within 5 days to avoid interruption to your water supply.\n\nYou can pay:\n• Online at waterco.example.com/pay\n• By phone on 0800 000 0000\n• By setting up a Direct Debit to avoid future reminders\n\nIf you have already paid, please disregard this notice.\n\nWater Co Customer Services` },
-  2: { body_text: `Dear Parents,\n\nWe are delighted to confirm a place on the Local Scouts Summer Camp 2026, taking place 14–18 July.\n\nTo secure the place, a non-refundable deposit of £75 is required by 1 June 2026.\n\nThe total camp cost is £195, with the remaining £120 due by 30 June.\n\nPlease pay via bank transfer to the account details we hold on file for your group, using the reference provided at registration.\n\nKit list and further details to follow.\n\nYours in Scouting,\nGroup Scout Leader` },
+  2: { body_text: `Dear Parents,\n\nWe are delighted to confirm a place on the Local Scouts Summer Camp 2026, taking place 14–18 July.\n\nTo secure the place, a non-refundable deposit of £75 is required by 1 June 2026. The total camp cost is £195, with the remaining £120 due by 30 June.\n\nPayment details will be provided separately by your group leader.\n\nKit list and further details to follow.\n\nYours in Scouting,\nGroup Scout Leader` },
   3: { body_text: `Dear Parent/Guardian,\n\nYear 9 Geography Field Trip – 12 June 2026\n\nPlease complete and return the attached consent form by Friday 30 May.\n\nCost: £45 (includes transport and entrance fees)\nDeparture: 7:30am from the main school gate\nReturn: approximately 6:30pm\n\nStudents should bring a packed lunch, waterproof clothing and suitable footwear.\n\nPayment can be made via the school's online payment system.\n\nMany thanks,\nHead of Geography` },
   4: { body_text: `Dear Customer,\n\nYour annual boiler service is now due.\n\nOur engineer can attend on:\n• Tuesday 3 June, 9am–1pm\n• Friday 6 June, 9am–1pm\n\nPlease call 0333 000 0000 or reply to this email to confirm your preferred date.\n\nAs a plan customer, this service is included at no extra cost.\n\nKind regards,\nEnergy Co Home Services` },
   5: { body_text: `Dear Families,\n\nSummer Fair – Saturday 21 June, 12–4pm\n\nWe need parent volunteers to help make this year's fair a success! We're looking for helpers for one-hour slots throughout the day.\n\nRoles include:\n• Tombola\n• BBQ assistance\n• Face painting support\n• Car park marshalling\n\nPlease sign up via the school website.\n\nAll volunteers receive complimentary entry and a free drink!\n\nWith thanks,\nThe PTA` },

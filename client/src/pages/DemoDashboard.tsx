@@ -1,26 +1,25 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Home, User, Building2, Sun, Moon } from 'lucide-react'
+import { LogOut, Home, User, Building2, Sun, Moon, Check, Send, X, ChevronDown } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
 import FeedbackModal from '../components/FeedbackModal'
 import Badge from '../components/Badge'
 import { format } from 'date-fns'
-import { X, ChevronDown, Send } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { DEMO_TASKS, DEMO_EMAILS, DEMO_EMAIL_BODIES, DEMO_USER } from '../demo/mockData'
+import { DEMO_TASKS, DEMO_EMAILS, DEMO_EMAIL_BODIES, DEMO_USER, DEMO_FAMILY } from '../demo/mockData'
 
-type TabId = 'home' | 'thomas' | 'matthew' | 'household'
+type TabId = 'home' | 'hope' | 'charles' | 'household'
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string }[] = [
   { id: 'home', label: 'Home', icon: <Home size={16} /> },
-  { id: 'thomas', label: 'Thomas', icon: <User size={16} />, category: 'Thomas' },
-  { id: 'matthew', label: 'Matthew', icon: <User size={16} />, category: 'Matthew' },
+  { id: 'hope', label: 'Hope', icon: <User size={16} />, category: 'Hope' },
+  { id: 'charles', label: 'Charles', icon: <User size={16} />, category: 'Charles' },
   { id: 'household', label: 'Household', icon: <Building2 size={16} />, category: 'Household' },
 ]
 
 const categoryColour: Record<string, 'blue' | 'purple' | 'green'> = {
-  Thomas: 'blue', Matthew: 'purple', Household: 'green',
+  Hope: 'blue', Charles: 'purple', Household: 'green',
 }
 
 function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void }) {
@@ -44,6 +43,8 @@ export default function DemoDashboard() {
   const [tasks, setTasks] = useState<Task[]>(DEMO_TASKS)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [demoComment, setDemoComment] = useState('')
+  const [showAssignPicker, setShowAssignPicker] = useState(false)
+  const assignRef = useRef<HTMLDivElement>(null)
 
   const filteredTasks = activeTab === 'home'
     ? tasks
@@ -53,6 +54,7 @@ export default function DemoDashboard() {
   const fyiTasks = filteredTasks.filter(t => t.is_fyi_only)
 
   function handleRowClick(task: Task) {
+    setShowAssignPicker(false)
     setSelectedTask(task)
   }
 
@@ -61,6 +63,14 @@ export default function DemoDashboard() {
     const updated = { ...selectedTask, status: newStatus }
     setSelectedTask(updated)
     setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+  }
+
+  function handleAssign(name: string) {
+    if (!selectedTask) return
+    const updated = { ...selectedTask, assignee_name: name || null }
+    setSelectedTask(updated)
+    setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+    setShowAssignPicker(false)
   }
 
   const emailBody = selectedTask ? DEMO_EMAIL_BODIES[selectedTask.email_id] : null
@@ -116,7 +126,7 @@ export default function DemoDashboard() {
               {DEMO_EMAILS.map(email => (
                 <button key={email.id} onClick={() => {
                   const task = tasks.find(t => t.email_id === email.id)
-                  if (task) setSelectedTask(task)
+                  if (task) handleRowClick(task)
                 }}
                   className="w-full text-left px-0 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors flex items-start gap-3 group">
                   <div className="flex-1 min-w-0">
@@ -145,7 +155,7 @@ export default function DemoDashboard() {
       </nav>
 
       {/* Demo task modal */}
-      <Dialog.Root open={!!selectedTask} onOpenChange={o => !o && setSelectedTask(null)}>
+      <Dialog.Root open={!!selectedTask} onOpenChange={o => { if (!o) { setSelectedTask(null); setShowAssignPicker(false) } }}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/60 z-40" />
           <Dialog.Content className="fixed inset-x-4 top-4 bottom-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[720px] md:top-8 md:bottom-8 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 flex flex-col overflow-hidden">
@@ -172,16 +182,41 @@ export default function DemoDashboard() {
               </Dialog.Close>
             </div>
 
-            {selectedTask && selectedTask.id > 0 && (
+            {selectedTask && (
               <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 space-y-2 text-xs">
                 {selectedTask.summary && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Summary</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{selectedTask.summary}</span></p>}
                 {selectedTask.action && <p><span className="font-semibold text-orange-500 dark:text-orange-400 uppercase tracking-wider">Action</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{selectedTask.action}</span></p>}
                 {selectedTask.due_date && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Due</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{selectedTask.due_date}</span></p>}
+
+                {/* Assignee picker */}
                 <div className="flex items-center gap-2 pt-1">
                   <span className="font-medium text-slate-400">Assigned to:</span>
-                  <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400">
-                    {selectedTask.assignee_name || 'Unassigned'} <ChevronDown size={10} className="inline" />
-                  </span>
+                  <div className="relative" ref={assignRef}>
+                    <button
+                      onClick={() => setShowAssignPicker(p => !p)}
+                      className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-orange-500/20 text-orange-600 dark:text-orange-400 hover:bg-orange-500/30 transition-colors"
+                    >
+                      {selectedTask.assignee_name || 'Unassigned'}
+                      <ChevronDown size={10} />
+                    </button>
+                    {showAssignPicker && (
+                      <div className="absolute top-7 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-2xl z-10 w-44 overflow-hidden">
+                        <div className="py-1">
+                          <button onClick={() => handleAssign('')}
+                            className="w-full text-left px-3 py-2 text-xs text-slate-400 dark:text-slate-500 italic hover:bg-slate-100 dark:hover:bg-slate-700">
+                            Unassigned
+                          </button>
+                          {DEMO_FAMILY.map(member => (
+                            <button key={member.id} onClick={() => handleAssign(member.name)}
+                              className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-between transition-colors">
+                              {member.name}
+                              {selectedTask.assignee_name === member.name && <Check size={12} className="text-orange-500" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -198,7 +233,8 @@ export default function DemoDashboard() {
                 <input type="text" value={demoComment} onChange={e => setDemoComment(e.target.value)}
                   placeholder="Add a comment…"
                   className="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-600 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <button onClick={() => setDemoComment('')} className="p-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-colors" disabled={!demoComment.trim()}>
+                <button onClick={() => setDemoComment('')} disabled={!demoComment.trim()}
+                  className="p-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-colors">
                   <Send size={14} />
                 </button>
               </div>
