@@ -24,7 +24,7 @@ app.use(`${BASE}/api`, api);
 // Serve React frontend
 const clientDist = path.join(__dirname, '..', 'client', 'dist');
 app.use(BASE, express.static(clientDist));
-app.get(`${BASE}/*`, (req, res) => {
+app.get(`${BASE}/*path`, (req, res) => {
   res.sendFile(path.join(clientDist, 'index.html'));
 });
 
