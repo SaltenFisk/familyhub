@@ -7,6 +7,7 @@ import TaskTable, { type Task } from '../components/TaskTable'
 import EmailModal from '../components/EmailModal'
 import RecentEmails from '../components/RecentEmails'
 import FeedbackModal from '../components/FeedbackModal'
+import AboutModal from '../components/AboutModal'
 import ApiErrorBanner from '../components/ApiErrorBanner'
 import api from '../api/client'
 
@@ -110,6 +111,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">{user?.name}</span>
+            <AboutModal />
             <FeedbackModal />
             <button
               onClick={toggle}
