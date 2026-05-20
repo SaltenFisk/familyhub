@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
   --color-slate-950: #0f172a;
   --color-slate-900: #0f172a;
@@ -29,12 +27,6 @@
     margin: 0;
     background-color: #0f172a;
     color: #f1f5f9;
-  }
-
-  /* Light mode overrides */
-  html:not(.dark) body {
-    background-color: #f8fafc;
-    color: #0f172a;
   }
 
   #root { min-height: 100svh; }

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Home, User, Building2, Sun, Moon } from 'lucide-react'
+import { LogOut, Home, User, Building2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
 import EmailModal from '../components/EmailModal'
 import RecentEmails from '../components/RecentEmails'
@@ -19,7 +18,7 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string
 
 function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void }) {
   return (
-    <div className="bg-slate-800 dark:bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-sm">
+    <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-sm">
       <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
         <h2 className="font-semibold text-slate-100 text-sm tracking-wide">{title}</h2>
         <span className="text-xs text-slate-400 bg-slate-700 rounded-full px-2.5 py-0.5 font-medium">{tasks.length}</span>
@@ -33,7 +32,6 @@ function TaskPanel({ title, tasks, onRowClick }: { title: string; tasks: Task[];
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
-  const { dark, toggle } = useTheme()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<TabId>('home')
   const [tasks, setTasks] = useState<Task[]>([])
@@ -72,21 +70,21 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 dark:bg-slate-950 flex flex-col" style={{ backgroundColor: dark ? '#0f172a' : '#f8fafc' }}>
+    <div className="min-h-screen bg-slate-950 flex flex-col">
 
       {/* Header */}
-      <header className="bg-slate-800 dark:bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-lg" style={{ backgroundColor: dark ? '#1e293b' : '#ffffff', borderColor: dark ? '#334155' : '#e2e8f0' }}>
+      <header className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <span className="text-orange-500 font-bold text-lg tracking-tight">Family</span>
-            <span className="font-bold text-lg tracking-tight" style={{ color: dark ? '#f1f5f9' : '#0f172a' }}>Hub</span>
+            <span className="text-slate-100 font-bold text-lg tracking-tight">Hub</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm hidden sm:block" style={{ color: dark ? '#94a3b8' : '#64748b' }}>{user?.name}</span>
-            <button onClick={toggle} className="p-1.5 rounded-lg transition-colors hover:bg-slate-700" style={{ color: dark ? '#94a3b8' : '#64748b' }}>
-              {dark ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-            <button onClick={handleLogout} className="p-1.5 rounded-lg transition-colors hover:bg-slate-700" style={{ color: dark ? '#94a3b8' : '#64748b' }}>
+            <span className="text-sm text-slate-400 hidden sm:block">{user?.name}</span>
+            <button
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
+            >
               <LogOut size={16} />
             </button>
           </div>
@@ -100,10 +98,9 @@ export default function Dashboard() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-orange-500 text-orange-500'
-                  : 'border-transparent hover:border-slate-600'
+                  ? 'border-orange-500 text-orange-400'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
               }`}
-              style={{ color: activeTab === tab.id ? '#f97316' : dark ? '#94a3b8' : '#64748b' }}
             >
               {tab.icon} {tab.label}
             </button>
@@ -123,9 +120,9 @@ export default function Dashboard() {
             <TaskPanel title="FYI Only" tasks={fyiTasks} onRowClick={setSelectedTask} />
 
             {activeTab === 'home' && (
-              <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-sm" style={{ backgroundColor: dark ? '#1e293b' : '#ffffff', borderColor: dark ? '#334155' : '#e2e8f0' }}>
-                <div className="px-4 py-3 border-b border-slate-700" style={{ borderColor: dark ? '#334155' : '#e2e8f0' }}>
-                  <h2 className="font-semibold text-sm tracking-wide" style={{ color: dark ? '#f1f5f9' : '#0f172a' }}>Recent Emails</h2>
+              <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-sm">
+                <div className="px-4 py-3 border-b border-slate-700">
+                  <h2 className="font-semibold text-slate-100 text-sm tracking-wide">Recent Emails</h2>
                 </div>
                 <div className="p-4">
                   <RecentEmails onEmailClick={handleEmailClick} />
@@ -137,14 +134,15 @@ export default function Dashboard() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 border-t z-30" style={{ backgroundColor: dark ? '#1e293b' : '#ffffff', borderColor: dark ? '#334155' : '#e2e8f0' }}>
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-slate-800 border-t border-slate-700 z-30">
         <div className="flex">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors"
-              style={{ color: activeTab === tab.id ? '#f97316' : dark ? '#64748b' : '#94a3b8' }}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
+                activeTab === tab.id ? 'text-orange-400' : 'text-slate-500 hover:text-slate-300'
+              }`}
             >
               {tab.icon}
               {tab.label}
