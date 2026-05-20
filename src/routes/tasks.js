@@ -11,7 +11,10 @@ router.get('/', requireAuth, async (req, res) => {
     SELECT t.*, e.from_address, e.from_name, e.subject, e.received_at,
            u.name AS assignee_name,
            GROUP_CONCAT(DISTINCT c.name ORDER BY c.name) AS categories,
-           GROUP_CONCAT(DISTINCT tg.name ORDER BY tg.name) AS tags
+           GROUP_CONCAT(DISTINCT tg.name ORDER BY tg.name) AS tags,
+           COUNT(DISTINCT cm.id) AS comment_count,
+           (SELECT cm2.body FROM comments cm2 WHERE cm2.task_id = t.id ORDER BY cm2.created_at DESC LIMIT 1) AS latest_comment,
+           (SELECT cu.name FROM comments cm2 JOIN users cu ON cm2.user_id = cu.id WHERE cm2.task_id = t.id ORDER BY cm2.created_at DESC LIMIT 1) AS latest_comment_by
     FROM tasks t
     JOIN emails e ON t.email_id = e.id
     LEFT JOIN users u ON t.assignee_id = u.id
@@ -19,6 +22,7 @@ router.get('/', requireAuth, async (req, res) => {
     LEFT JOIN categories c ON tc.category_id = c.id
     LEFT JOIN task_tags tt ON t.id = tt.task_id
     LEFT JOIN tags tg ON tt.tag_id = tg.id
+    LEFT JOIN comments cm ON t.id = cm.task_id
     WHERE 1=1
   `;
   const params = [];
