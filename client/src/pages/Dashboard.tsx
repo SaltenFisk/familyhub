@@ -42,6 +42,8 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
+  const [filterWho, setFilterWho] = useState<string | null>(null)
+  const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
 
   const currentTab = tabs.find(t => t.id === activeTab)!
 
@@ -54,14 +56,29 @@ export default function Dashboard() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { loadTasks(currentTab) }, [activeTab])
+  useEffect(() => {
+    setFilterWho(null)
+    setFilterAssignee(null)
+    loadTasks(currentTab)
+  }, [activeTab])
 
   function handleLogout() { logout(); navigate('/login') }
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
-  const actionTasks = tasks.filter(t => !t.is_fyi_only && !t.is_upcoming && t.status !== 'done')
-  const upcomingTasks = tasks.filter(t => t.is_upcoming && t.event_date && new Date(t.event_date) >= today)
-  const fyiTasks = tasks.filter(t => t.is_fyi_only)
+
+  const whoNames = [...new Set(tasks.flatMap(t => t.categories?.split(',').map(c => c.trim()) ?? []))].sort()
+  const assigneeNames = [...new Set(tasks.map(t => t.assignee_name).filter(Boolean) as string[])].sort()
+
+  const filtered = tasks.filter(t => {
+    if (filterWho && !t.categories?.split(',').map(c => c.trim()).includes(filterWho)) return false
+    if (filterAssignee === '__unassigned__' && t.assignee_name) return false
+    if (filterAssignee && filterAssignee !== '__unassigned__' && t.assignee_name !== filterAssignee) return false
+    return true
+  })
+
+  const actionTasks = filtered.filter(t => !t.is_fyi_only && !t.is_upcoming && t.status !== 'done')
+  const upcomingTasks = filtered.filter(t => t.is_upcoming && t.event_date && new Date(t.event_date) >= today)
+  const fyiTasks = filtered.filter(t => t.is_fyi_only)
 
   async function handleDismiss(task: Task) {
     await api.delete(`/tasks/${task.id}`)
@@ -136,6 +153,62 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
+            {/* Filter bar */}
+            {(whoNames.length > 0 || assigneeNames.length > 0) && (
+              <div className="flex flex-wrap gap-4 items-center">
+                {whoNames.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">Who</span>
+                    <div className="flex flex-wrap gap-1">
+                      {whoNames.map(name => (
+                        <button
+                          key={name}
+                          onClick={() => setFilterWho(f => f === name ? null : name)}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                            filterWho === name
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-orange-300 dark:hover:border-orange-700'
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {assigneeNames.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">Assignee</span>
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        onClick={() => setFilterAssignee(f => f === '__unassigned__' ? null : '__unassigned__')}
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                          filterAssignee === '__unassigned__'
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-orange-300 dark:hover:border-orange-700'
+                        }`}
+                      >
+                        Unassigned
+                      </button>
+                      {assigneeNames.map(name => (
+                        <button
+                          key={name}
+                          onClick={() => setFilterAssignee(f => f === name ? null : name)}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                            filterAssignee === name
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-orange-300 dark:hover:border-orange-700'
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <TaskPanel title="Actions Required" tasks={actionTasks} onRowClick={setSelectedTask} onDismiss={handleDismiss} showAction />
             <TaskPanel title="Upcoming" tasks={upcomingTasks} onRowClick={setSelectedTask} onDismiss={handleDismiss} showEvent />
             <TaskPanel title="Info" tasks={fyiTasks} onRowClick={setSelectedTask} onDismiss={handleDismiss} />
