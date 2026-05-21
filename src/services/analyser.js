@@ -1,4 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const mammoth = require('mammoth');
 const db = require('../db');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -81,7 +82,49 @@ Subject: ${subject}
 ${body}
 `.trim();
 
-async function analyseEmail(emailId) {
+async function buildAttachmentContent(attachments) {
+  const blocks = [];
+  for (const att of attachments) {
+    const ct = (att.contentType || '').toLowerCase();
+    const filename = att.filename || '';
+    const buf = att.content; // Buffer
+    if (!buf || buf.length === 0) continue;
+
+    if (ct === 'application/pdf' || filename.toLowerCase().endsWith('.pdf')) {
+      // Claude natively understands PDFs as document blocks (limit ~10MB but stay conservative)
+      if (buf.length > 8 * 1024 * 1024) {
+        console.log(`Skipping large PDF attachment: ${filename} (${buf.length} bytes)`);
+        continue;
+      }
+      blocks.push({
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data: buf.toString('base64') },
+        title: filename || 'attachment.pdf',
+      });
+    } else if (
+      ct === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      ct === 'application/msword' ||
+      filename.toLowerCase().endsWith('.docx') ||
+      filename.toLowerCase().endsWith('.doc')
+    ) {
+      try {
+        const result = await mammoth.extractRawText({ buffer: buf });
+        const text = result.value?.trim();
+        if (text) {
+          blocks.push({
+            type: 'text',
+            text: `\n\n[Attachment: ${filename || 'document'}]\n${text.slice(0, 6000)}`,
+          });
+        }
+      } catch (err) {
+        console.warn(`Failed to extract text from ${filename}:`, err.message);
+      }
+    }
+  }
+  return blocks;
+}
+
+async function analyseEmail(emailId, attachments = []) {
   const [rows] = await db.query('SELECT * FROM emails WHERE id = ?', [emailId]);
   const email = rows[0];
   if (!email) throw new Error(`Email ${emailId} not found`);
@@ -92,6 +135,16 @@ async function analyseEmail(emailId) {
   const [userRows] = await db.query('SELECT id, name FROM users ORDER BY id');
   const userNames = userRows.map(u => u.name).join(', ');
 
+  // Build content: main text prompt + any attachment blocks
+  const attachmentBlocks = await buildAttachmentContent(attachments);
+  const userContent = attachmentBlocks.length > 0
+    ? [{ type: 'text', text: USER_TEMPLATE(email.subject, `${email.from_name} <${email.from_address}>`, truncatedBody, userNames) }, ...attachmentBlocks]
+    : USER_TEMPLATE(email.subject, `${email.from_name} <${email.from_address}>`, truncatedBody, userNames);
+
+  if (attachmentBlocks.length > 0) {
+    console.log(`Email ${emailId}: including ${attachmentBlocks.length} attachment(s) in analysis`);
+  }
+
   let response;
   try {
     response = await anthropic.messages.create({
@@ -101,7 +154,7 @@ async function analyseEmail(emailId) {
       messages: [
         {
           role: 'user',
-          content: USER_TEMPLATE(email.subject, `${email.from_name} <${email.from_address}>`, truncatedBody, userNames),
+          content: userContent,
         },
       ],
     });

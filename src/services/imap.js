@@ -45,6 +45,7 @@ async function pollMailbox() {
   });
 
   const newEmailIds = [];
+  const emailAttachments = new Map(); // emailId → attachment array
 
   try {
     await client.connect();
@@ -93,8 +94,23 @@ async function pollMailbox() {
           ]
         );
 
-        newEmailIds.push(result.insertId);
-        console.log(`Stored email ${result.insertId}: ${parsed.subject}`);
+        const emailId = result.insertId;
+        newEmailIds.push(emailId);
+
+        // Collect PDF and Word attachments for analysis
+        const relevant = (parsed.attachments || []).filter(att => {
+          const ct = (att.contentType || '').toLowerCase();
+          const fn = (att.filename || '').toLowerCase();
+          return ct === 'application/pdf' || fn.endsWith('.pdf') ||
+            ct === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+            ct === 'application/msword' || fn.endsWith('.docx') || fn.endsWith('.doc');
+        });
+        if (relevant.length > 0) {
+          emailAttachments.set(emailId, relevant);
+          console.log(`Email ${emailId} has ${relevant.length} attachment(s): ${relevant.map(a => a.filename || a.contentType).join(', ')}`);
+        }
+
+        console.log(`Stored email ${emailId}: ${parsed.subject}`);
       }
     } finally {
       lock.release();
@@ -104,10 +120,10 @@ async function pollMailbox() {
     console.error('IMAP poll error:', err.message);
   }
 
-  // Analyse new emails
+  // Analyse new emails (pass attachments in memory)
   for (const emailId of newEmailIds) {
     try {
-      const taskId = await analyseEmail(emailId);
+      const taskId = await analyseEmail(emailId, emailAttachments.get(emailId) || []);
       console.log(`Email ${emailId} → task ${taskId}`);
     } catch (err) {
       console.error(`Analysis failed for email ${emailId}:`, err.message);
