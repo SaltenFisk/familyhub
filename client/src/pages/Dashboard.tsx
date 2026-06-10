@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Home, User, Sun, Moon } from 'lucide-react'
+import { LogOut, Home, User, Sun, Moon, Archive } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
 import EmailModal from '../components/EmailModal'
 import RecentEmails from '../components/RecentEmails'
+import EmailArchive from '../components/EmailArchive'
 import FeedbackModal from '../components/FeedbackModal'
 import AboutModal from '../components/AboutModal'
 import ApiErrorBanner from '../components/ApiErrorBanner'
 import api from '../api/client'
 
-type TabId = 'home' | 'darren' | 'lorraine' | 'thomas' | 'matthew'
+type TabId = 'home' | 'darren' | 'lorraine' | 'thomas' | 'matthew' | 'archive'
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string }[] = [
   { id: 'home', label: 'Home', icon: <Home size={16} /> },
@@ -19,6 +20,7 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string
   { id: 'lorraine', label: 'Lorraine', icon: <User size={16} />, category: 'Lorraine' },
   { id: 'thomas', label: 'Thomas', icon: <User size={16} />, category: 'Thomas' },
   { id: 'matthew', label: 'Matthew', icon: <User size={16} />, category: 'Matthew' },
+  { id: 'archive', label: 'Archive', icon: <Archive size={16} /> },
 ]
 
 function TaskPanel({ title, tasks, onRowClick, onDismiss, showAction = false, showEvent = false }: { title: string; tasks: Task[]; onRowClick: (t: Task) => void; onDismiss?: (t: Task) => void; showAction?: boolean; showEvent?: boolean }) {
@@ -49,6 +51,7 @@ export default function Dashboard() {
   const currentTab = tabs.find(t => t.id === activeTab)!
 
   function loadTasks(tab = currentTab) {
+    if (tab.id === 'archive') return
     setLoading(true)
     const params: Record<string, string> = {}
     if (tab.category) params.category = tab.category
@@ -60,7 +63,7 @@ export default function Dashboard() {
   useEffect(() => {
     setFilterWho(null)
     setFilterAssignee(null)
-    loadTasks(currentTab)
+    if (activeTab !== 'archive') loadTasks(currentTab)
   }, [activeTab])
 
   function handleLogout() { logout(); navigate('/login') }
@@ -149,7 +152,9 @@ export default function Dashboard() {
 
       {/* Main content */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 pb-24 md:pb-6 space-y-5">
-        {loading ? (
+        {activeTab === 'archive' ? (
+          <EmailArchive onEmailClick={handleEmailClick} />
+        ) : loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
           </div>
