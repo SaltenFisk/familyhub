@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
 import EmailModal from '../components/EmailModal'
-import RecentEmails from '../components/RecentEmails'
 import EmailArchive from '../components/EmailArchive'
 import FeedbackModal from '../components/FeedbackModal'
 import AboutModal from '../components/AboutModal'
@@ -229,17 +228,6 @@ export default function Dashboard() {
             <TaskPanel title="Actions Required" tasks={actionTasks} onRowClick={setSelectedTask} onDismiss={handleDismiss} showAction />
             <TaskPanel title="Upcoming" tasks={upcomingTasks} onRowClick={setSelectedTask} onDismiss={handleDismiss} showEvent />
             <TaskPanel title="Info" tasks={fyiTasks} onRowClick={setSelectedTask} onDismiss={handleDismiss} />
-
-            {activeTab === 'home' && (
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-                  <h2 className="font-semibold text-slate-800 dark:text-slate-100 text-sm tracking-wide">Recent Emails</h2>
-                </div>
-                <div className="p-4">
-                  <RecentEmails onEmailClick={handleEmailClick} />
-                </div>
-              </div>
-            )}
           </>
         )}
       </main>

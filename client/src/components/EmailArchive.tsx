@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { format } from 'date-fns'
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, X } from 'lucide-react'
 import api from '../api/client'
 
 interface Email {
@@ -13,11 +13,19 @@ interface Email {
   processed: boolean
 }
 
+type SortCol = 'received_at' | 'sender' | 'subject'
+type SortDir = 'asc' | 'desc'
+
 interface Props {
   onEmailClick: (emailId: number) => void
 }
 
 const PAGE_SIZE = 20
+
+function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; sortDir: SortDir }) {
+  if (col !== sortCol) return <ChevronUp size={12} className="opacity-20" />
+  return sortDir === 'asc' ? <ChevronUp size={12} className="text-orange-500" /> : <ChevronDown size={12} className="text-orange-500" />
+}
 
 export default function EmailArchive({ onEmailClick }: Props) {
   const [emails, setEmails] = useState<Email[]>([])
@@ -26,6 +34,8 @@ export default function EmailArchive({ onEmailClick }: Props) {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [sortCol, setSortCol] = useState<SortCol>('received_at')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleSearchChange(value: string) {
@@ -43,6 +53,15 @@ export default function EmailArchive({ onEmailClick }: Props) {
     setPage(1)
   }
 
+  function handleSort(col: SortCol) {
+    if (col === sortCol) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortCol(col)
+      setSortDir(col === 'received_at' ? 'desc' : 'asc')
+    }
+  }
+
   useEffect(() => {
     setLoading(true)
     api.get('/emails', { params: { page, limit: PAGE_SIZE, search: debouncedSearch } })
@@ -53,7 +72,24 @@ export default function EmailArchive({ onEmailClick }: Props) {
       .finally(() => setLoading(false))
   }, [page, debouncedSearch])
 
+  const sorted = [...emails].sort((a, b) => {
+    let av: string, bv: string
+    if (sortCol === 'received_at') {
+      av = a.received_at; bv = b.received_at
+    } else if (sortCol === 'sender') {
+      av = (a.sender || a.from_name || a.from_address).toLowerCase()
+      bv = (b.sender || b.from_name || b.from_address).toLowerCase()
+    } else {
+      av = (a.subject || '').toLowerCase()
+      bv = (b.subject || '').toLowerCase()
+    }
+    const cmp = av < bv ? -1 : av > bv ? 1 : 0
+    return sortDir === 'asc' ? cmp : -cmp
+  })
+
   const totalPages = Math.ceil(total / PAGE_SIZE)
+
+  const thClass = "px-4 py-2.5 font-semibold text-left select-none cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
@@ -94,14 +130,20 @@ export default function EmailArchive({ onEmailClick }: Props) {
         ) : (
           <table className="w-full text-sm min-w-[600px]">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                <th className="px-4 py-2.5 font-semibold w-28">Date</th>
-                <th className="px-4 py-2.5 font-semibold w-40">Sender</th>
-                <th className="px-4 py-2.5 font-semibold">Subject</th>
+              <tr className="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                <th className={`${thClass} w-28`} onClick={() => handleSort('received_at')}>
+                  <span className="flex items-center gap-1">Date <SortIcon col="received_at" sortCol={sortCol} sortDir={sortDir} /></span>
+                </th>
+                <th className={`${thClass} w-40`} onClick={() => handleSort('sender')}>
+                  <span className="flex items-center gap-1">Sender <SortIcon col="sender" sortCol={sortCol} sortDir={sortDir} /></span>
+                </th>
+                <th className={thClass} onClick={() => handleSort('subject')}>
+                  <span className="flex items-center gap-1">Subject <SortIcon col="subject" sortCol={sortCol} sortDir={sortDir} /></span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {emails.map(email => (
+              {sorted.map(email => (
                 <tr
                   key={email.id}
                   onClick={() => onEmailClick(email.id)}
