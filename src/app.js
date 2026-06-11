@@ -19,6 +19,7 @@ api.use('/emails', require('./routes/emails'));
 api.use('/tags', require('./routes/tags'));
 api.use('/users', require('./routes/users'));
 api.use('/status', require('./routes/status'));
+api.use('/attachments', require('./routes/attachments'));
 
 app.use(`${BASE}/api`, api);
 

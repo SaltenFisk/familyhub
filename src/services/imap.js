@@ -97,7 +97,7 @@ async function pollMailbox() {
         const emailId = result.insertId;
         newEmailIds.push(emailId);
 
-        // Collect PDF and Word attachments for analysis
+        // Collect PDF and Word attachments for analysis and storage
         const relevant = (parsed.attachments || []).filter(att => {
           const ct = (att.contentType || '').toLowerCase();
           const fn = (att.filename || '').toLowerCase();
@@ -107,6 +107,12 @@ async function pollMailbox() {
         });
         if (relevant.length > 0) {
           emailAttachments.set(emailId, relevant);
+          for (const att of relevant) {
+            await db.query(
+              'INSERT INTO attachments (email_id, filename, content_type, data) VALUES (?, ?, ?, ?)',
+              [emailId, att.filename || 'attachment', att.contentType || 'application/octet-stream', att.content]
+            );
+          }
           console.log(`Email ${emailId} has ${relevant.length} attachment(s): ${relevant.map(a => a.filename || a.contentType).join(', ')}`);
         }
 

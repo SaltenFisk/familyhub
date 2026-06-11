@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, ChevronDown, Check, Send } from 'lucide-react'
+import { X, ChevronDown, Check, Send, Paperclip } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -32,6 +32,7 @@ interface Task {
 
 interface User { id: number; name: string; role: string }
 interface Comment { id: number; body: string; user_name: string; created_at: string }
+interface Attachment { id: number; filename: string; content_type: string; size: number }
 
 interface Props {
   task: Task | null
@@ -69,6 +70,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   const [showAssignPicker, setShowAssignPicker] = useState(false)
   const [makeDefault, setMakeDefault] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
+  const [attachments, setAttachments] = useState<Attachment[]>([])
   const [newComment, setNewComment] = useState('')
   const [postingComment, setPostingComment] = useState(false)
   const assignRef = useRef<HTMLDivElement>(null)
@@ -121,6 +123,13 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
       api.get(`/tasks/${task.id}/comments`).then(r => setComments(r.data)).catch(() => {})
     } else {
       setComments([])
+    }
+
+    const emailId = task.email_id || (task.id === 0 ? task.email_id : null)
+    if (emailId) {
+      api.get('/attachments', { params: { email_id: emailId } }).then(r => setAttachments(r.data)).catch(() => {})
+    } else {
+      setAttachments([])
     }
   }, [task?.id])
 
@@ -320,6 +329,27 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                   </span>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Attachments */}
+          {attachments.length > 0 && (
+            <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700 flex flex-wrap gap-2">
+              {attachments.map(att => (
+                <button
+                  key={att.id}
+                  onClick={async () => {
+                    const r = await api.get(`/attachments/${att.id}`, { responseType: 'blob' })
+                    const url = URL.createObjectURL(r.data)
+                    window.open(url, '_blank')
+                    setTimeout(() => URL.revokeObjectURL(url), 60000)
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-orange-50 dark:hover:bg-orange-500/10 border border-slate-200 dark:border-slate-600 hover:border-orange-300 dark:hover:border-orange-500/40 text-xs text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                >
+                  <Paperclip size={12} />
+                  {att.filename}
+                </button>
+              ))}
             </div>
           )}
 
