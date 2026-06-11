@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Home, User, Sun, Moon, Archive } from 'lucide-react'
+import { LogOut, Home, Sun, Moon, Archive } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
@@ -11,14 +11,10 @@ import AboutModal from '../components/AboutModal'
 import ApiErrorBanner from '../components/ApiErrorBanner'
 import api from '../api/client'
 
-type TabId = 'home' | 'darren' | 'lorraine' | 'thomas' | 'matthew' | 'archive'
+type TabId = 'home' | 'archive'
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode; category?: string }[] = [
   { id: 'home', label: 'Home', icon: <Home size={16} /> },
-  { id: 'darren', label: 'Darren', icon: <User size={16} />, category: 'Darren' },
-  { id: 'lorraine', label: 'Lorraine', icon: <User size={16} />, category: 'Lorraine' },
-  { id: 'thomas', label: 'Thomas', icon: <User size={16} />, category: 'Thomas' },
-  { id: 'matthew', label: 'Matthew', icon: <User size={16} />, category: 'Matthew' },
   { id: 'archive', label: 'Archive', icon: <Archive size={16} /> },
 ]
 
