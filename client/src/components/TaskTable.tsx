@@ -114,7 +114,10 @@ export default function TaskTable({ tasks, onRowClick, onDismiss, showAction = f
               {!showEvent && (
                 <td className="px-4 py-3 text-xs whitespace-nowrap">
                   {task.assignee_name
-                    ? <Badge label={task.assignee_name} variant={categoryColour[task.assignee_name] ?? 'gray'} />
+                    ? (() => {
+                        const firstName = task.assignee_name.split(' ')[0]
+                        return <Badge label={firstName} variant={categoryColour[firstName] ?? 'gray'} />
+                      })()
                     : <Badge label="Unassigned" variant="orange" />}
                 </td>
               )}
