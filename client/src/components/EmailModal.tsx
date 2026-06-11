@@ -34,10 +34,22 @@ interface User { id: number; name: string; role: string }
 interface Comment { id: number; body: string; user_name: string; created_at: string }
 interface Attachment { id: number; filename: string; content_type: string; size: number }
 
+export interface DemoData {
+  bodyText?: string
+  familyMembers: { id: number; name: string }[]
+  attachments?: { id: number; filename: string; label?: string }[]
+  comments?: Comment[]
+  categoryColour: Record<string, 'blue' | 'purple' | 'green' | 'amber'>
+  allWho: readonly string[]
+  onSave?: (task: Task) => void
+  onAssign?: (taskId: number, name: string) => void
+}
+
 interface Props {
   task: Task | null
   onClose: () => void
   onUpdated?: () => void
+  demo?: DemoData
 }
 
 const statusOptions = [
@@ -46,14 +58,14 @@ const statusOptions = [
   { value: 'done', label: 'Done' },
 ]
 
-const ALL_WHO = ['Darren', 'Lorraine', 'Thomas', 'Matthew'] as const
+const LIVE_ALL_WHO = ['Darren', 'Lorraine', 'Thomas', 'Matthew'] as const
 
-const categoryColour: Record<string, 'blue' | 'purple' | 'green' | 'amber'> = {
+const LIVE_CATEGORY_COLOUR: Record<string, 'blue' | 'purple' | 'green' | 'amber'> = {
   Darren: 'green', Lorraine: 'amber', Thomas: 'blue', Matthew: 'purple',
 }
 
-export default function EmailModal({ task, onClose, onUpdated }: Props) {
-  const { user } = useAuth()
+export default function EmailModal({ task, onClose, onUpdated, demo }: Props) {
+  const authCtx = useAuth()
   const { dark } = useTheme()
   const [fullTask, setFullTask] = useState<Task | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -75,7 +87,13 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   const [postingComment, setPostingComment] = useState(false)
   const assignRef = useRef<HTMLDivElement>(null)
 
-  const isAdmin = user?.role === 'admin'
+  const isDemo = !!demo
+  // In demo mode we treat everything as admin (no real auth context needed)
+  const isAdmin = isDemo || (authCtx?.user?.role === 'admin')
+
+  const categoryColour = demo?.categoryColour ?? LIVE_CATEGORY_COLOUR
+  const allWho = demo?.allWho ?? LIVE_ALL_WHO
+
   const open = !!task
   const data = fullTask || task
 
@@ -84,6 +102,28 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     setSaved(false)
     setShowAssignPicker(false)
     setMakeDefault(false)
+
+    if (isDemo) {
+      setFullTask({ ...task, body_text: demo?.bodyText ?? task.body_text })
+      setAssigneeId('')
+      setStatus(task.status || 'pending')
+      setIsFyi(!!task.is_fyi_only)
+      setIsUpcoming(!!task.is_upcoming)
+      setEventDate(task.event_date || '')
+      setDueDate(task.due_date || '')
+      setWhoList(task.categories ? task.categories.split(',').map(s => s.trim()) : [])
+      setOutcome('')
+      setComments(demo?.comments ?? [])
+      setAttachments(
+        (demo?.attachments ?? []).map((a, i) => ({
+          id: a.id ?? i,
+          filename: a.label ?? a.filename,
+          content_type: 'application/octet-stream',
+          size: 0,
+        }))
+      )
+      return
+    }
 
     if (task.id > 0) {
       api.get(`/tasks/${task.id}`).then(r => {
@@ -108,7 +148,6 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
         setOutcome('')
       })
     } else {
-      // Email-only view (from Recent Emails), no task record
       setFullTask(task)
       setStatus('pending')
       setIsFyi(!!task.is_fyi_only)
@@ -131,9 +170,8 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     } else {
       setAttachments([])
     }
-  }, [task?.id])
+  }, [task?.id, isDemo])
 
-  // Close assign picker when clicking outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (assignRef.current && !assignRef.current.contains(e.target as Node)) {
@@ -145,14 +183,23 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   }, [])
 
   async function handleAssign(uid: string) {
-    if (!task || task.id === 0) return
+    if (!task) return
+
+    if (isDemo) {
+      const name = demo!.familyMembers.find(m => m.id.toString() === uid)?.name ?? ''
+      setFullTask(prev => prev ? { ...prev, assignee_name: name || null } : prev)
+      demo?.onAssign?.(task.id, name)
+      setShowAssignPicker(false)
+      return
+    }
+
+    if (task.id === 0) return
     setAssigneeId(uid)
     setShowAssignPicker(false)
 
     await api.patch(`/tasks/${task.id}`, { assignee_id: uid ? Number(uid) : null })
 
     if (makeDefault && uid) {
-      // Set default assignee on all tags associated with this task
       const tagNames = data?.tags?.split(',').map(t => t.trim()) || []
       for (const tagName of tagNames) {
         const allTags = await api.get('/tags')
@@ -167,6 +214,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   }
 
   async function postComment() {
+    if (isDemo) { setNewComment(''); return }
     if (!task || task.id === 0 || !newComment.trim()) return
     setPostingComment(true)
     try {
@@ -180,7 +228,25 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   }
 
   async function handleSave() {
-    if (!task || task.id === 0) { onClose(); return }
+    if (!task) return
+
+    if (isDemo) {
+      const updated: Task = {
+        ...task,
+        ...fullTask,
+        is_fyi_only: isFyi,
+        is_upcoming: isUpcoming,
+        status,
+        due_date: !isFyi && !isUpcoming ? (dueDate || null) : null,
+        event_date: isUpcoming ? (eventDate || null) : null,
+        categories: whoList.join(', ') || null,
+      }
+      demo?.onSave?.(updated)
+      onClose()
+      return
+    }
+
+    if (task.id === 0) { onClose(); return }
     setSaving(true)
     try {
       await api.patch(`/tasks/${task.id}`, {
@@ -199,9 +265,13 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
     }
   }
 
-  const currentAssigneeName = users.find(u => u.id.toString() === assigneeId)?.name
-    || data?.assignee_name
-    || null
+  const currentAssigneeName = isDemo
+    ? (fullTask?.assignee_name ?? data?.assignee_name ?? null)
+    : (users.find(u => u.id.toString() === assigneeId)?.name || data?.assignee_name || null)
+
+  const assigneeList: { id: string; name: string }[] = isDemo
+    ? demo!.familyMembers.map(m => ({ id: m.id.toString(), name: m.name }))
+    : users.map(u => ({ id: u.id.toString(), name: u.name }))
 
   return (
     <Dialog.Root open={open} onOpenChange={o => !o && onClose()}>
@@ -220,7 +290,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
               </p>
               <div className="flex flex-wrap gap-1 mt-2">
                 {task && task.id > 0 && isAdmin ? (
-                  ALL_WHO.map(name => {
+                  allWho.map(name => {
                     const active = whoList.includes(name)
                     return (
                       <button
@@ -276,7 +346,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                 </div>
               )}
 
-              {/* Assignee badge with picker */}
+              {/* Assignee */}
               <div className="flex items-center gap-2 pt-1">
                 <span className="font-medium text-slate-400">Assigned to:</span>
                 {isAdmin ? (
@@ -291,17 +361,19 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
 
                     {showAssignPicker && (
                       <div className="absolute top-7 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-2xl z-10 w-52 overflow-hidden">
-                        <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">
-                          <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={makeDefault}
-                              onChange={e => setMakeDefault(e.target.checked)}
-                              className="rounded"
-                            />
-                            Set as default for these tags
-                          </label>
-                        </div>
+                        {!isDemo && (
+                          <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">
+                            <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={makeDefault}
+                                onChange={e => setMakeDefault(e.target.checked)}
+                                className="rounded"
+                              />
+                              Set as default for these tags
+                            </label>
+                          </div>
+                        )}
                         <div className="py-1">
                           <button
                             onClick={() => handleAssign('')}
@@ -309,14 +381,16 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                           >
                             Unassigned
                           </button>
-                          {users.map(u => (
+                          {assigneeList.map(u => (
                             <button
                               key={u.id}
-                              onClick={() => handleAssign(u.id.toString())}
+                              onClick={() => handleAssign(u.id)}
                               className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-between transition-colors"
                             >
                               {u.name}
-                              {assigneeId === u.id.toString() && <Check size={12} className="text-orange-400" />}
+                              {(isDemo ? currentAssigneeName === u.name : assigneeId === u.id) && (
+                                <Check size={12} className="text-orange-400" />
+                              )}
                             </button>
                           ))}
                         </div>
@@ -339,15 +413,21 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                 <button
                   key={att.id}
                   onClick={async () => {
+                    if (isDemo) return
                     const r = await api.get(`/attachments/${att.id}`, { responseType: 'blob' })
                     const url = URL.createObjectURL(r.data)
                     window.open(url, '_blank')
                     setTimeout(() => URL.revokeObjectURL(url), 60000)
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-orange-50 dark:hover:bg-orange-500/10 border border-slate-200 dark:border-slate-600 hover:border-orange-300 dark:hover:border-orange-500/40 text-xs text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs text-slate-600 dark:text-slate-300 transition-colors ${
+                    isDemo
+                      ? 'cursor-default'
+                      : 'hover:bg-orange-50 dark:hover:bg-orange-500/10 hover:border-orange-300 dark:hover:border-orange-500/40 hover:text-orange-600 dark:hover:text-orange-400'
+                  }`}
                 >
                   <Paperclip size={12} />
                   {att.filename}
+                  {isDemo && <span className="text-slate-400 dark:text-slate-500">(demo)</span>}
                 </button>
               ))}
             </div>
@@ -355,7 +435,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
 
           {/* Email body */}
           <div className="flex-1 overflow-y-auto p-4 min-h-0">
-            {data?.body_html ? (
+            {data?.body_html && !isDemo ? (
               <iframe
                 srcDoc={dark
                   ? `<style>
@@ -387,11 +467,13 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
             )}
           </div>
 
-          {/* Comments — only for real tasks */}
+          {/* Comments */}
           {task && task.id > 0 && (
             <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 space-y-3 max-h-48 overflow-y-auto">
               {comments.length === 0 && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-1">No comments yet</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-1">
+                  {isDemo ? 'No comments (demo)' : 'No comments yet'}
+                </p>
               )}
               {comments.map(c => (
                 <div key={c.id} className="flex gap-2">
@@ -427,7 +509,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
             </div>
           )}
 
-          {/* Status / outcome controls — only for real tasks */}
+          {/* Controls */}
           {task && task.id > 0 && (
             <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-3">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -485,7 +567,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
                 )}
               </div>
 
-              {status === 'done' && !isUpcoming && (
+              {status === 'done' && !isUpcoming && !isDemo && (
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Outcome / notes</label>
                   <textarea
@@ -499,7 +581,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
               )}
 
               <div className="flex items-center justify-between">
-                {saved && <p className="text-xs text-emerald-500 dark:text-emerald-400">Saved</p>}
+                {saved && !isDemo && <p className="text-xs text-emerald-500 dark:text-emerald-400">Saved</p>}
                 <div className="flex gap-2 ml-auto">
                   <Dialog.Close asChild>
                     <button className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Close</button>

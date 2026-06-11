@@ -3,14 +3,14 @@ import { format } from 'date-fns'
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, X } from 'lucide-react'
 import api from '../api/client'
 
-interface Email {
+export interface Email {
   id: number
   received_at: string
   from_address: string
   from_name: string | null
-  sender: string | null
+  sender?: string | null
   subject: string
-  processed: boolean
+  processed?: boolean
 }
 
 type SortCol = 'received_at' | 'sender' | 'subject'
@@ -18,6 +18,8 @@ type SortDir = 'asc' | 'desc'
 
 interface Props {
   onEmailClick: (emailId: number) => void
+  /** When provided, uses this data instead of fetching from the API (demo mode) */
+  staticEmails?: Email[]
 }
 
 const PAGE_SIZE = 20
@@ -27,13 +29,15 @@ function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; s
   return sortDir === 'asc' ? <ChevronUp size={12} className="text-orange-500" /> : <ChevronDown size={12} className="text-orange-500" />
 }
 
-export default function EmailArchive({ onEmailClick }: Props) {
+export default function EmailArchive({ onEmailClick, staticEmails }: Props) {
+  const isDemo = !!staticEmails
+
   const [emails, setEmails] = useState<Email[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!isDemo)
   const [sortCol, setSortCol] = useState<SortCol>('received_at')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -62,7 +66,9 @@ export default function EmailArchive({ onEmailClick }: Props) {
     }
   }
 
+  // Live mode: fetch from API
   useEffect(() => {
+    if (isDemo) return
     setLoading(true)
     api.get('/emails', { params: { page, limit: PAGE_SIZE, search: debouncedSearch } })
       .then(r => {
@@ -70,13 +76,40 @@ export default function EmailArchive({ onEmailClick }: Props) {
         setTotal(r.data.total)
       })
       .finally(() => setLoading(false))
-  }, [page, debouncedSearch])
+  }, [page, debouncedSearch, isDemo])
 
-  const sorted = [...emails].sort((a, b) => {
+  // Demo mode: filter and paginate staticEmails client-side
+  const displayEmails = isDemo ? (() => {
+    const q = debouncedSearch.toLowerCase()
+    const filtered = q
+      ? staticEmails!.filter(e =>
+          (e.from_name || '').toLowerCase().includes(q) ||
+          e.from_address.toLowerCase().includes(q) ||
+          e.subject.toLowerCase().includes(q)
+        )
+      : staticEmails!
+
+    const sorted = [...filtered].sort((a, b) => {
+      let av: string, bv: string
+      if (sortCol === 'received_at') { av = a.received_at; bv = b.received_at }
+      else if (sortCol === 'sender') {
+        av = (a.sender || a.from_name || a.from_address).toLowerCase()
+        bv = (b.sender || b.from_name || b.from_address).toLowerCase()
+      } else {
+        av = (a.subject || '').toLowerCase()
+        bv = (b.subject || '').toLowerCase()
+      }
+      const cmp = av < bv ? -1 : av > bv ? 1 : 0
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+
+    return { all: sorted, page: sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), total: sorted.length }
+  })() : null
+
+  const sorted = isDemo ? displayEmails!.page : [...emails].sort((a, b) => {
     let av: string, bv: string
-    if (sortCol === 'received_at') {
-      av = a.received_at; bv = b.received_at
-    } else if (sortCol === 'sender') {
+    if (sortCol === 'received_at') { av = a.received_at; bv = b.received_at }
+    else if (sortCol === 'sender') {
       av = (a.sender || a.from_name || a.from_address).toLowerCase()
       bv = (b.sender || b.from_name || b.from_address).toLowerCase()
     } else {
@@ -87,7 +120,8 @@ export default function EmailArchive({ onEmailClick }: Props) {
     return sortDir === 'asc' ? cmp : -cmp
   })
 
-  const totalPages = Math.ceil(total / PAGE_SIZE)
+  const effectiveTotal = isDemo ? displayEmails!.total : total
+  const totalPages = Math.ceil(effectiveTotal / PAGE_SIZE)
 
   const thClass = "px-4 py-2.5 font-semibold text-left select-none cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
 
@@ -96,7 +130,7 @@ export default function EmailArchive({ onEmailClick }: Props) {
       {/* Header + search */}
       <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
         <h2 className="font-semibold text-slate-800 dark:text-slate-100 text-sm tracking-wide shrink-0">All Emails</h2>
-        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-full px-2.5 py-0.5 font-medium shrink-0">{total}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-full px-2.5 py-0.5 font-medium shrink-0">{effectiveTotal}</span>
         <div className="relative flex-1 max-w-sm ml-auto">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
@@ -123,7 +157,7 @@ export default function EmailArchive({ onEmailClick }: Props) {
           <div className="flex items-center justify-center py-16">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500" />
           </div>
-        ) : emails.length === 0 ? (
+        ) : sorted.length === 0 ? (
           <p className="text-sm text-slate-400 dark:text-slate-500 py-12 text-center">
             {debouncedSearch ? 'No emails match your search' : 'No emails yet'}
           </p>
