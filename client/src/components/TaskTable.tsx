@@ -114,7 +114,7 @@ export default function TaskTable({ tasks, onRowClick, onDismiss, showAction = f
               {!showEvent && (
                 <td className="px-4 py-3 text-xs whitespace-nowrap">
                   {task.assignee_name
-                    ? <span className="text-slate-600 dark:text-slate-300">{task.assignee_name}</span>
+                    ? <Badge label={task.assignee_name} variant={categoryColour[task.assignee_name] ?? 'gray'} />
                     : <Badge label="Unassigned" variant="orange" />}
                 </td>
               )}
