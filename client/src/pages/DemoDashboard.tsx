@@ -22,7 +22,6 @@ const categoryColour: Record<string, 'blue' | 'purple' | 'green' | 'amber'> = {
   Jill: 'green', Mark: 'amber', Hope: 'blue', Charles: 'purple',
 }
 
-
 function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; sortDir: SortDir }) {
   if (col !== sortCol) return <ChevronUp size={12} className="opacity-20" />
   return sortDir === 'asc' ? <ChevronUp size={12} className="text-orange-500" /> : <ChevronDown size={12} className="text-orange-500" />
@@ -57,6 +56,12 @@ export default function DemoDashboard() {
   const [sortCol, setSortCol] = useState<SortCol>('received_at')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [archivePage, setArchivePage] = useState(1)
+  // Modal editing state
+  const [modalIsFyi, setModalIsFyi] = useState(false)
+  const [modalIsUpcoming, setModalIsUpcoming] = useState(false)
+  const [modalStatus, setModalStatus] = useState('pending')
+  const [modalDueDate, setModalDueDate] = useState('')
+  const [modalEventDate, setModalEventDate] = useState('')
   const assignRef = useRef<HTMLDivElement>(null)
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
@@ -87,6 +92,11 @@ export default function DemoDashboard() {
 
   function handleRowClick(task: Task) {
     setShowAssignPicker(false)
+    setModalIsFyi(!!task.is_fyi_only)
+    setModalIsUpcoming(!!task.is_upcoming)
+    setModalStatus(task.status || 'pending')
+    setModalDueDate(task.due_date || '')
+    setModalEventDate(task.event_date || '')
     setSelectedTask(task)
   }
 
@@ -94,11 +104,18 @@ export default function DemoDashboard() {
     setTasks(prev => prev.filter(t => t.id !== task.id))
   }
 
-  function handleStatusChange(newStatus: string) {
+  function handleSave() {
     if (!selectedTask) return
-    const updated = { ...selectedTask, status: newStatus }
-    setSelectedTask(updated)
+    const updated: Task = {
+      ...selectedTask,
+      is_fyi_only: modalIsFyi,
+      is_upcoming: modalIsUpcoming,
+      status: modalStatus,
+      due_date: !modalIsFyi && !modalIsUpcoming ? (modalDueDate || null) : null,
+      event_date: modalIsUpcoming ? (modalEventDate || null) : null,
+    }
     setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+    setSelectedTask(null)
   }
 
   function handleAssign(name: string) {
@@ -191,7 +208,8 @@ export default function DemoDashboard() {
                 </thead>
                 <tbody>
                   {archivePage_.map(email => (
-                    <tr key={email.id} onClick={() => { const task = tasks.find(t => t.email_id === email.id); if (task) handleRowClick(task) }}
+                    <tr key={email.id}
+                      onClick={() => { const task = tasks.find(t => t.email_id === email.id); if (task) handleRowClick(task) }}
                       className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 cursor-pointer transition-colors group">
                       <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-xs font-mono">{format(new Date(email.received_at), 'd MMM yy')}</td>
                       <td className="px-4 py-3 max-w-[160px] truncate text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-xs">{email.from_name || email.from_address}</td>
@@ -277,6 +295,7 @@ export default function DemoDashboard() {
           <Dialog.Overlay className="fixed inset-0 bg-black/60 z-40" />
           <Dialog.Content className="fixed inset-x-4 top-4 bottom-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[720px] md:top-8 md:bottom-8 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 flex flex-col overflow-hidden">
 
+            {/* Header */}
             <div className="flex items-start justify-between p-4 border-b border-slate-200 dark:border-slate-700">
               <div className="flex-1 min-w-0 pr-4">
                 <Dialog.Title className="font-semibold text-slate-900 dark:text-slate-100 text-sm leading-tight truncate">
@@ -299,13 +318,23 @@ export default function DemoDashboard() {
               </Dialog.Close>
             </div>
 
+            {/* Summary / action / due / assignee */}
             {selectedTask && (
               <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 space-y-2 text-xs">
                 {selectedTask.summary && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Summary</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{selectedTask.summary}</span></p>}
                 {selectedTask.action && <p><span className="font-semibold text-orange-500 dark:text-orange-400 uppercase tracking-wider">Action</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{selectedTask.action}</span></p>}
-                {selectedTask.due_date && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Due</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{selectedTask.due_date}</span></p>}
-                {selectedTask.event_date && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Event date</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{selectedTask.event_date}</span></p>}
 
+                {/* Due date — editable for action tasks */}
+                {!modalIsFyi && !modalIsUpcoming && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Due</span>
+                    <input type="date" value={modalDueDate} onChange={e => setModalDueDate(e.target.value)}
+                      className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-200 rounded-lg px-2 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                    {modalDueDate && <button onClick={() => setModalDueDate('')} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"><X size={12} /></button>}
+                  </div>
+                )}
+
+                {/* Assignee */}
                 <div className="flex items-center gap-2 pt-1">
                   <span className="font-medium text-slate-400">Assigned to:</span>
                   <div className="relative" ref={assignRef}>
@@ -336,7 +365,7 @@ export default function DemoDashboard() {
               </div>
             )}
 
-            {/* Demo attachment indicator */}
+            {/* Demo attachment */}
             {selectedTask?.email_id === 2 && (
               <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700 flex flex-wrap gap-2">
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs text-slate-500 dark:text-slate-400">
@@ -345,12 +374,14 @@ export default function DemoDashboard() {
               </div>
             )}
 
+            {/* Email body */}
             <div className="flex-1 overflow-y-auto p-4 min-h-0">
               <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
                 {emailBody?.body_text || 'No content'}
               </pre>
             </div>
 
+            {/* Comments */}
             <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 space-y-3 max-h-36 overflow-y-auto">
               <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-1">No comments (demo)</p>
               <div className="flex gap-2 pt-1">
@@ -364,30 +395,42 @@ export default function DemoDashboard() {
               </div>
             </div>
 
+            {/* Controls */}
             <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-3">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                {/* Type toggle */}
                 <div className="flex items-center gap-3">
                   <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</label>
                   <div className="flex gap-2">
-                    {(['Action', 'Upcoming', 'Info'] as const).map(label => {
-                      const active = label === 'Action' ? (!selectedTask?.is_fyi_only && !selectedTask?.is_upcoming)
-                        : label === 'Upcoming' ? !!selectedTask?.is_upcoming
-                        : !!selectedTask?.is_fyi_only
-                      return (
-                        <button key={label} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${active ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
-                          {label}
-                        </button>
-                      )
-                    })}
+                    {([
+                      { label: 'Action', active: !modalIsFyi && !modalIsUpcoming, onClick: () => { setModalIsFyi(false); setModalIsUpcoming(false) } },
+                      { label: 'Upcoming', active: modalIsUpcoming, onClick: () => { setModalIsFyi(false); setModalIsUpcoming(true) } },
+                      { label: 'Info', active: modalIsFyi, onClick: () => { setModalIsFyi(true); setModalIsUpcoming(false) } },
+                    ] as const).map(btn => (
+                      <button key={btn.label} onClick={btn.onClick}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${btn.active ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
+                        {btn.label}
+                      </button>
+                    ))}
                   </div>
+                  {/* Event date when Upcoming */}
+                  {modalIsUpcoming && (
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Event date:</label>
+                      <input type="date" value={modalEventDate} onChange={e => setModalEventDate(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                    </div>
+                  )}
                 </div>
-                {!selectedTask?.is_fyi_only && !selectedTask?.is_upcoming && (
+
+                {/* Status — action tasks only */}
+                {!modalIsFyi && !modalIsUpcoming && (
                   <div className="flex items-center gap-3">
                     <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Status:</label>
                     <div className="flex gap-2">
                       {[{ value: 'pending', label: 'Pending' }, { value: 'in_progress', label: 'In Progress' }, { value: 'done', label: 'Done' }].map(o => (
-                        <button key={o.value} onClick={() => handleStatusChange(o.value)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${selectedTask?.status === o.value ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
+                        <button key={o.value} onClick={() => setModalStatus(o.value)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${modalStatus === o.value ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
                           {o.label}
                         </button>
                       ))}
@@ -395,13 +438,15 @@ export default function DemoDashboard() {
                   </div>
                 )}
               </div>
+
               <div className="flex justify-end gap-2">
                 <Dialog.Close asChild>
                   <button className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Close</button>
                 </Dialog.Close>
-                <Dialog.Close asChild>
-                  <button className="px-4 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium">Save</button>
-                </Dialog.Close>
+                <button onClick={handleSave}
+                  className="px-4 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium">
+                  Save
+                </button>
               </div>
             </div>
           </Dialog.Content>
