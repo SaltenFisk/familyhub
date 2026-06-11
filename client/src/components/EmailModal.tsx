@@ -62,6 +62,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
   const [isUpcoming, setIsUpcoming] = useState<boolean>(false)
   const [eventDate, setEventDate] = useState<string>('')
   const [whoList, setWhoList] = useState<string[]>([])
+  const [dueDate, setDueDate] = useState<string>('')
   const [outcome, setOutcome] = useState<string>('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -90,6 +91,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
         setIsFyi(!!r.data.is_fyi_only)
         setIsUpcoming(!!r.data.is_upcoming)
         setEventDate(r.data.event_date || '')
+        setDueDate(r.data.due_date || '')
         setWhoList(r.data.categories ? r.data.categories.split(',').map((s: string) => s.trim()) : [])
         setOutcome(r.data.outcome || '')
       }).catch(() => {
@@ -99,6 +101,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
         setIsFyi(!!task.is_fyi_only)
         setIsUpcoming(!!task.is_upcoming)
         setEventDate(task.event_date || '')
+        setDueDate(task.due_date || '')
         setWhoList(task.categories ? task.categories.split(',').map(s => s.trim()) : [])
         setOutcome('')
       })
@@ -177,6 +180,7 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
         is_fyi_only: isFyi,
         is_upcoming: isUpcoming,
         event_date: isUpcoming ? (eventDate || null) : null,
+        due_date: !isFyi && !isUpcoming ? (dueDate || null) : null,
         categories: whoList,
       })
       setSaved(true)
@@ -246,7 +250,22 @@ export default function EmailModal({ task, onClose, onUpdated }: Props) {
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 space-y-2 text-xs">
               {data.summary && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Summary</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{data.summary}</span></p>}
               {data.action && <p><span className="font-semibold text-orange-500 dark:text-orange-400 uppercase tracking-wider text-xs">Action</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{data.action}</span></p>}
-              {data.due_date && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Due</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{data.due_date}</span></p>}
+              {!isFyi && !isUpcoming && (
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Due</span>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={e => setDueDate(e.target.value)}
+                    className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-200 rounded-lg px-2 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  {dueDate && (
+                    <button onClick={() => setDueDate('')} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Assignee badge with picker */}
               <div className="flex items-center gap-2 pt-1">

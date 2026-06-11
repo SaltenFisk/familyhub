@@ -72,7 +72,7 @@ router.get('/:id', requireAuth, async (req, res) => {
 
 // PATCH /tasks/:id — update status, assignee, outcome, categories
 router.patch('/:id', requireAuth, async (req, res) => {
-  const { status, assignee_id, outcome, is_fyi_only, is_upcoming, event_date, categories } = req.body;
+  const { status, assignee_id, outcome, is_fyi_only, is_upcoming, event_date, due_date, categories } = req.body;
   const task = (await db.query('SELECT * FROM tasks WHERE id = ?', [req.params.id]))[0][0];
   if (!task) return res.status(404).json({ error: 'Not found' });
 
@@ -91,6 +91,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
   }
   if (is_fyi_only !== undefined && req.user.role === 'admin') updates.is_fyi_only = is_fyi_only ? 1 : 0;
   if (event_date !== undefined && req.user.role === 'admin') updates.event_date = event_date || null;
+  if (due_date !== undefined) updates.due_date = due_date || null;
 
   if (Object.keys(updates).length > 0) {
     const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
