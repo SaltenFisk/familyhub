@@ -95,16 +95,25 @@ export default function Dashboard() {
   }
 
   async function handleEmailClick(emailId: number) {
-    const r = await api.get(`/emails/${emailId}`)
-    const email = r.data
-    setSelectedTask({
-      id: 0, email_id: emailId, summary: '', action: null, due_date: null,
-      is_fyi_only: true, is_upcoming: false, event_date: null, status: 'pending', assignee_name: null,
-      categories: null, tags: null, sender: email.sender || null,
-      from_address: email.from_address, from_name: email.from_name,
-      subject: email.subject, received_at: email.received_at,
-      body_text: email.body_text, body_html: email.body_html,
-    })
+    // Try to open the linked task first so everything is editable
+    const [emailRes, tasksRes] = await Promise.all([
+      api.get(`/emails/${emailId}`),
+      api.get('/tasks', { params: { email_id: emailId, limit: 1 } }).catch(() => null),
+    ])
+    const email = emailRes.data
+    const linkedTask = tasksRes?.data?.[0]
+    if (linkedTask) {
+      setSelectedTask(linkedTask)
+    } else {
+      setSelectedTask({
+        id: 0, email_id: emailId, summary: '', action: null, due_date: null,
+        is_fyi_only: true, is_upcoming: false, event_date: null, status: 'pending', assignee_name: null,
+        categories: null, tags: null, sender: email.sender || null,
+        from_address: email.from_address, from_name: email.from_name,
+        subject: email.subject, received_at: email.received_at,
+        body_text: email.body_text, body_html: email.body_html,
+      })
+    }
   }
 
   return (

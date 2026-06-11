@@ -4,7 +4,7 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 // GET /tasks — list with filters
 router.get('/', requireAuth, async (req, res) => {
-  const { category, is_fyi_only, status, page = 1, limit = 50 } = req.query;
+  const { category, is_fyi_only, status, email_id, page = 1, limit = 50 } = req.query;
   const offset = (page - 1) * limit;
 
   let sql = `
@@ -38,6 +38,10 @@ router.get('/', requireAuth, async (req, res) => {
   if (status) {
     sql += ' AND t.status = ?';
     params.push(status);
+  }
+  if (email_id) {
+    sql += ' AND t.email_id = ?';
+    params.push(Number(email_id));
   }
 
   sql += ' GROUP BY t.id ORDER BY e.received_at DESC LIMIT ? OFFSET ?';
