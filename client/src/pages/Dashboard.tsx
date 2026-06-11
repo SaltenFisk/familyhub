@@ -80,8 +80,18 @@ export default function Dashboard() {
     return true
   })
 
-  const actionTasks = filtered.filter(t => !t.is_fyi_only && !t.is_upcoming && t.status !== 'done')
-  const upcomingTasks = filtered.filter(t => t.is_upcoming && t.event_date && new Date(t.event_date) >= today)
+  const byDate = (a: Task, b: Task, field: 'due_date' | 'event_date') => {
+    const da = a[field] ? new Date(a[field]!).getTime() : Infinity
+    const db = b[field] ? new Date(b[field]!).getTime() : Infinity
+    return da - db
+  }
+
+  const actionTasks = filtered
+    .filter(t => !t.is_fyi_only && !t.is_upcoming && t.status !== 'done')
+    .sort((a, b) => byDate(a, b, 'due_date'))
+  const upcomingTasks = filtered
+    .filter(t => t.is_upcoming && t.event_date && new Date(t.event_date) >= today)
+    .sort((a, b) => byDate(a, b, 'event_date'))
   const fyiTasks = filtered.filter(t => t.is_fyi_only)
 
   async function handleDismiss(task: Task) {
