@@ -60,12 +60,13 @@ export default function AboutModal() {
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">How to use it</h3>
               <ul className="space-y-1.5 text-slate-500 dark:text-slate-400">
                 <li>• Forward emails to your family inbox and they'll appear within 2 minutes.</li>
-                <li>• Click any row to open the full email and edit the type, who it's for, assignee, and status.</li>
-                <li>• Use the <span className="font-medium text-slate-600 dark:text-slate-300">tabs</span> at the top to filter by family member.</li>
-                <li>• Use the <span className="font-medium text-slate-600 dark:text-slate-300">Who / Assignee</span> filter chips to narrow down further.</li>
-                <li>• Hover a row and click <span className="font-medium text-slate-600 dark:text-slate-300">✕</span> to dismiss it — the email stays in Recent Emails.</li>
+                <li>• Click any row to open the full email and edit the type, who it's for, assignee, due date, and status.</li>
+                <li>• Use the <span className="font-medium text-slate-600 dark:text-slate-300">Who / Assignee</span> filter chips to narrow down the list.</li>
+                <li>• Hover a row and click <span className="font-medium text-slate-600 dark:text-slate-300">✕</span> to dismiss it — the email stays in the Archive.</li>
+                <li>• Use the <span className="font-medium text-slate-600 dark:text-slate-300">Archive</span> tab to browse and search all emails, and to correct any misclassified ones.</li>
                 <li>• Add comments to tasks to keep notes visible to the whole family.</li>
                 <li>• Mark actions as <span className="font-medium text-slate-600 dark:text-slate-300">Done</span> once completed — they drop off the list.</li>
+                <li>• Upcoming events disappear automatically once the date passes.</li>
               </ul>
             </section>
 
