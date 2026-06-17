@@ -58,6 +58,8 @@ const statusOptions = [
   { value: 'done', label: 'Done' },
 ]
 
+const DEMO_USER_NAME = 'Demo User'
+
 const LIVE_ALL_WHO = ['Darren', 'Lorraine', 'Thomas', 'Matthew'] as const
 
 const LIVE_CATEGORY_COLOUR: Record<string, 'blue' | 'purple' | 'green' | 'amber'> = {
@@ -214,7 +216,18 @@ export default function EmailModal({ task, onClose, onUpdated, demo }: Props) {
   }
 
   async function postComment() {
-    if (isDemo) { setNewComment(''); return }
+    if (isDemo) {
+      if (!newComment.trim()) return
+      const fakeComment: Comment = {
+        id: Date.now(),
+        body: newComment.trim(),
+        user_name: DEMO_USER_NAME,
+        created_at: new Date().toISOString(),
+      }
+      setComments(prev => [...prev, fakeComment])
+      setNewComment('')
+      return
+    }
     if (!task || task.id === 0 || !newComment.trim()) return
     setPostingComment(true)
     try {
@@ -222,6 +235,7 @@ export default function EmailModal({ task, onClose, onUpdated, demo }: Props) {
       setNewComment('')
       const r = await api.get(`/tasks/${task.id}/comments`)
       setComments(r.data)
+      onUpdated?.()
     } finally {
       setPostingComment(false)
     }
