@@ -264,7 +264,6 @@ export default function Dashboard() {
           setSelectedTask(null)
           loadTasks()
         }}
-        onCommented={() => loadTasks()}
       />
       <ApiErrorBanner />
     </div>

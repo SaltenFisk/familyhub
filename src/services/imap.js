@@ -51,10 +51,7 @@ async function pollMailbox() {
     await client.connect();
     const lock = await client.getMailboxLock('INBOX');
     try {
-      // Fetch unseen messages OR messages received in the last 24 hours.
-      // The 'since' fallback catches emails auto-marked-read by mail clients.
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const uids = await client.search({ or: [{ unseen: true }, { since }] }, { uid: true });
+      const uids = await client.search({ unseen: true }, { uid: true });
       for await (const msg of client.fetch(uids, { envelope: true, source: true }, { uid: true })) {
         const parsed = await simpleParser(msg.source);
         const messageId = parsed.messageId || `${msg.uid}@familyhub`;
