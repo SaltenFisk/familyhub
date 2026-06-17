@@ -49,6 +49,7 @@ interface Props {
   task: Task | null
   onClose: () => void
   onUpdated?: () => void
+  onCommented?: () => void
   demo?: DemoData
 }
 
@@ -66,7 +67,7 @@ const LIVE_CATEGORY_COLOUR: Record<string, 'blue' | 'purple' | 'green' | 'amber'
   Darren: 'green', Lorraine: 'amber', Thomas: 'blue', Matthew: 'purple',
 }
 
-export default function EmailModal({ task, onClose, onUpdated, demo }: Props) {
+export default function EmailModal({ task, onClose, onUpdated, onCommented, demo }: Props) {
   const authCtx = useAuth()
   const { dark } = useTheme()
   const [fullTask, setFullTask] = useState<Task | null>(null)
@@ -235,7 +236,7 @@ export default function EmailModal({ task, onClose, onUpdated, demo }: Props) {
       setNewComment('')
       const r = await api.get(`/tasks/${task.id}/comments`)
       setComments(r.data)
-      onUpdated?.()
+      onCommented?.()
     } finally {
       setPostingComment(false)
     }
