@@ -36,6 +36,7 @@ Use when the email confirms or announces a specific future event with a date —
 - A confirmed booking (camp, trip, appointment, match, concert, event)
 - A school trip or activity on a specific date
 - A reminder of an upcoming event already arranged
+- A calendar invite or meeting request (BEGIN:VCALENDAR / .ics) — ALWAYS classify these as is_upcoming
 - Set event_date to the date of the event (YYYY-MM-DD)
 - Set is_fyi_only = false, action = null when is_upcoming = true
 
@@ -82,6 +83,42 @@ Subject: ${subject}
 ${body}
 `.trim();
 
+function parseIcs(icsText) {
+  const get = (key) => {
+    // Handles both plain VALUE and VALUE;TZID=... variants
+    const m = icsText.match(new RegExp(`^${key}(?:;[^:]*)?:(.+)$`, 'm'));
+    return m ? m[1].trim() : null;
+  };
+
+  const parseIcsDate = (raw) => {
+    if (!raw) return null;
+    // TZID form: 20260714T090000 or date-only: 20260714
+    const digits = raw.replace(/[TZ]/g, '');
+    const d = digits.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3');
+    return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+  };
+
+  const unfold = (s) => s.replace(/\r?\n[ \t]/g, '');
+  const unescapeIcs = (s) => s.replace(/\\n/g, '\n').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
+
+  const text = unfold(icsText);
+  const summary = get('SUMMARY');
+  const description = get('DESCRIPTION');
+  const location = get('LOCATION');
+  const organizer = get('ORGANIZER');
+  const dtstart = parseIcsDate(get('DTSTART'));
+  const dtend = parseIcsDate(get('DTEND'));
+
+  const parts = [];
+  if (summary) parts.push(`Event: ${unescapeIcs(summary)}`);
+  if (dtstart) parts.push(`Date: ${dtstart}${dtend && dtend !== dtstart ? ` to ${dtend}` : ''}`);
+  if (location) parts.push(`Location: ${unescapeIcs(location)}`);
+  if (organizer) parts.push(`Organiser: ${organizer.replace(/^mailto:/i, '')}`);
+  if (description) parts.push(`Details: ${unescapeIcs(description).slice(0, 1000)}`);
+
+  return { text: parts.join('\n'), eventDate: dtstart };
+}
+
 async function buildAttachmentContent(attachments) {
   const blocks = [];
   for (const att of attachments) {
@@ -89,6 +126,19 @@ async function buildAttachmentContent(attachments) {
     const filename = att.filename || '';
     const buf = att.content; // Buffer
     if (!buf || buf.length === 0) continue;
+
+    if (ct === 'text/calendar' || filename.toLowerCase().endsWith('.ics')) {
+      try {
+        const icsText = buf.toString('utf8');
+        const { text } = parseIcs(icsText);
+        if (text) {
+          blocks.push({ type: 'text', text: `\n\n[Calendar Invite]\n${text}` });
+        }
+      } catch (err) {
+        console.warn(`Failed to parse ICS attachment ${filename}:`, err.message);
+      }
+      continue;
+    }
 
     if (ct === 'application/pdf' || filename.toLowerCase().endsWith('.pdf')) {
       // Claude natively understands PDFs as document blocks (limit ~10MB but stay conservative)
@@ -129,7 +179,19 @@ async function analyseEmail(emailId, attachments = []) {
   const email = rows[0];
   if (!email) throw new Error(`Email ${emailId} not found`);
 
-  const body = email.body_text || email.body_html?.replace(/<[^>]+>/g, ' ') || '';
+  let body = email.body_text || email.body_html?.replace(/<[^>]+>/g, ' ') || '';
+
+  // If the body is (or contains) an inline calendar invite, extract and prepend structured data
+  if (body.includes('BEGIN:VCALENDAR')) {
+    const vcStart = body.indexOf('BEGIN:VCALENDAR');
+    const vcEnd = body.indexOf('END:VCALENDAR');
+    const icsRaw = vcEnd > -1 ? body.slice(vcStart, vcEnd + 'END:VCALENDAR'.length) : body.slice(vcStart);
+    const { text: icsFormatted } = parseIcs(icsRaw);
+    if (icsFormatted) {
+      body = `[Calendar Invite]\n${icsFormatted}\n\n${body.slice(0, 1000)}`;
+    }
+  }
+
   const truncatedBody = body.slice(0, 4000); // Stay well within token limits
 
   const [userRows] = await db.query('SELECT id, name FROM users ORDER BY id');

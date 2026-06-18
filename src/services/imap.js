@@ -100,13 +100,14 @@ async function pollMailbox() {
         const emailId = result.insertId;
         newEmailIds.push(emailId);
 
-        // Collect PDF and Word attachments for analysis and storage
+        // Collect PDF, Word, and ICS attachments for analysis and storage
         const relevant = (parsed.attachments || []).filter(att => {
           const ct = (att.contentType || '').toLowerCase();
           const fn = (att.filename || '').toLowerCase();
           return ct === 'application/pdf' || fn.endsWith('.pdf') ||
             ct === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-            ct === 'application/msword' || fn.endsWith('.docx') || fn.endsWith('.doc');
+            ct === 'application/msword' || fn.endsWith('.docx') || fn.endsWith('.doc') ||
+            ct === 'text/calendar' || fn.endsWith('.ics');
         });
         if (relevant.length > 0) {
           emailAttachments.set(emailId, relevant);
