@@ -8,31 +8,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: hyperion.hostns.io
-          username: u63375
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -e
-            source ~/.nvm/nvm.sh 2>/dev/null || source ~/nodevenv/familyhub/22/bin/activate 2>/dev/null || true
-            cd /home/u63375/familyhub
-            git checkout -- .
-            git pull origin main
-            npm install --production
-            source /home/u63375/familyhub/.env 2>/dev/null || true
-            mysql -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "
-              CREATE TABLE IF NOT EXISTS attachments (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                email_id INT NOT NULL,
-                filename VARCHAR(255) NOT NULL,
-                content_type VARCHAR(100) NOT NULL,
-                data LONGBLOB NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (email_id) REFERENCES emails(id) ON DELETE CASCADE,
-                INDEX idx_email_id (email_id)
-              );
-            " 2>/dev/null || true
-            mkdir -p tmp && touch tmp/restart.txt
-            echo "Deploy complete"
+      - name: Trigger deploy webhook
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg ref "refs/heads/main" \
+            --arg after "${{ github.sha }}" \
+            '{ref: $ref, after: $after}')
+          SIG=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.DEPLOY_WEBHOOK_SECRET }}" | sed 's/.*= /sha256=/')
+          curl -sf \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: $SIG" \
+            -d "$PAYLOAD" \
+            https://saltenfisk.com/familyhub/api/deploy
+          echo "Webhook triggered"
