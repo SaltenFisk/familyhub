@@ -104,7 +104,8 @@ function parseIcs(icsText) {
   const text = unfold(icsText);
   const summary = get('SUMMARY');
   const description = get('DESCRIPTION');
-  const location = get('LOCATION');
+  // Apple uses X-APPLE-STRUCTURED-LOCATION as well as LOCATION
+  const location = get('LOCATION') || get('X-APPLE-STRUCTURED-LOCATION');
   const organizer = get('ORGANIZER');
   const dtstart = parseIcsDate(get('DTSTART'));
   const dtend = parseIcsDate(get('DTEND'));
@@ -127,7 +128,7 @@ async function buildAttachmentContent(attachments) {
     const buf = att.content; // Buffer
     if (!buf || buf.length === 0) continue;
 
-    if (ct === 'text/calendar' || filename.toLowerCase().endsWith('.ics')) {
+    if (ct === 'text/calendar' || ct === 'application/ics' || filename.toLowerCase().endsWith('.ics')) {
       try {
         const icsText = buf.toString('utf8');
         const { text } = parseIcs(icsText);

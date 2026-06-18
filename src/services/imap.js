@@ -107,7 +107,7 @@ async function pollMailbox() {
           return ct === 'application/pdf' || fn.endsWith('.pdf') ||
             ct === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
             ct === 'application/msword' || fn.endsWith('.docx') || fn.endsWith('.doc') ||
-            ct === 'text/calendar' || fn.endsWith('.ics');
+            ct === 'text/calendar' || ct === 'application/ics' || ct === 'application/octet-stream' && fn.endsWith('.ics') || fn.endsWith('.ics');
         });
         if (relevant.length > 0) {
           emailAttachments.set(emailId, relevant);
