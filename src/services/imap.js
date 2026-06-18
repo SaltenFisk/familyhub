@@ -59,6 +59,13 @@ async function pollMailbox() {
         const parsed = await simpleParser(msg.source);
         const messageId = parsed.messageId || `${msg.uid}@familyhub`;
 
+        // Log attachment content types to help diagnose ICS issues
+        if (parsed.attachments?.length) {
+          console.log(`Email "${parsed.subject}" attachments: ${parsed.attachments.map(a => `${a.filename || 'unnamed'}(${a.contentType})`).join(', ')}`);
+        }
+        const hasInlineCalendar = (parsed.text || '').includes('BEGIN:VCALENDAR');
+        if (hasInlineCalendar) console.log(`Email "${parsed.subject}" has inline VCALENDAR in body`);
+
         // Skip if this exact message was already stored
         const [existingMsg] = await db.query('SELECT id FROM emails WHERE message_id = ?', [messageId]);
         if (existingMsg.length > 0) continue;
