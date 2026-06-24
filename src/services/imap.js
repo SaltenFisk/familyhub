@@ -71,10 +71,10 @@ async function pollMailbox() {
         const normSubject = normaliseSubject(parsed.subject);
         const originalFrom = extractOriginalSender(parsed);
 
-        // Skip if we already have a task for the same original email (dedup forwarded copies)
+        // Skip if we already have the same original email forwarded within the last 7 days
         if (normSubject && originalFrom) {
           const [existingDedup] = await db.query(
-            'SELECT id FROM emails WHERE norm_subject = ? AND original_from = ?',
+            'SELECT id FROM emails WHERE norm_subject = ? AND original_from = ? AND received_at > DATE_SUB(NOW(), INTERVAL 7 DAY)',
             [normSubject, originalFrom]
           );
           if (existingDedup.length > 0) {
