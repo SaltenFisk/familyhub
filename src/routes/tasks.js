@@ -4,7 +4,7 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 // GET /tasks — list with filters
 router.get('/', requireAuth, async (req, res) => {
-  const { category, is_fyi_only, status, email_id, page = 1, limit = 50 } = req.query;
+  const { category, is_fyi_only, status, email_id, page = 1, limit = 500 } = req.query;
   const offset = (page - 1) * limit;
 
   let sql = `
