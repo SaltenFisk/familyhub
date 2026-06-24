@@ -53,7 +53,7 @@ async function pollMailbox() {
     try {
       // Fetch unseen messages OR messages received in the last 24 hours.
       // The 'since' fallback catches emails auto-marked-read by mail clients.
-      const since = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000); // 10-day window to recover any backlog
+      const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
       let uids;
       try {
         uids = await client.search({ or: [{ unseen: true }, { since }] }, { uid: true });
