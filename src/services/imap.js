@@ -25,7 +25,7 @@ function extractOriginalSender(parsed) {
   const dividerMatch = forwardDivider.exec(text);
   const searchText = dividerMatch ? text.slice(dividerMatch.index) : text;
 
-  const fromLine = /^from:\s*.*?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/im.exec(searchText);
+  const fromLine = /(?:^|\s)from:\s*.*?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/im.exec(searchText);
   if (fromLine) return fromLine[1].toLowerCase();
 
   // Fall back to envelope sender
@@ -71,8 +71,10 @@ async function pollMailbox() {
         const normSubject = normaliseSubject(parsed.subject);
         const originalFrom = extractOriginalSender(parsed);
 
-        // Skip if we already have the same original email forwarded within the last 7 days
-        if (normSubject && originalFrom) {
+        // Skip if we already have the same original email forwarded within the last 7 days.
+        // Only dedup when we successfully extracted an original sender (not the forwarder themselves).
+        const envelopeFrom = (parsed.from?.value?.[0]?.address || '').toLowerCase();
+        if (normSubject && originalFrom && originalFrom !== envelopeFrom) {
           const [existingDedup] = await db.query(
             'SELECT id FROM emails WHERE norm_subject = ? AND original_from = ? AND received_at > DATE_SUB(NOW(), INTERVAL 7 DAY)',
             [normSubject, originalFrom]
