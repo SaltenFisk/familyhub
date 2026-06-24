@@ -5,20 +5,8 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger deploy webhook
-        run: |
-          PAYLOAD=$(jq -n \
-            --arg ref "refs/heads/main" \
-            --arg after "${{ github.sha }}" \
-            '{ref: $ref, after: $after}')
-          SIG=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.DEPLOY_WEBHOOK_SECRET }}" | sed 's/.*= /sha256=/')
-          curl -sf \
-            -X POST \
-            -H "Content-Type: application/json" \
-            -H "X-Hub-Signature-256: $SIG" \
-            -d "$PAYLOAD" \
-            https://saltenfisk.com/familyhub/api/deploy
-          echo "Webhook triggered"
+      - name: Deploy handled by server-side cron
+        run: echo "Server polls GitHub every 2 minutes and self-deploys. No action needed here."
