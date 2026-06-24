@@ -25,6 +25,7 @@ router.post('/poll', requireAuth, requireAdmin, async (req, res) => {
   const { pollMailbox, debugSearch } = require('../services/imap');
   try {
     const info = await debugSearch();
+    await pollMailbox();
     res.json({ ok: true, ...info });
   } catch (err) {
     res.status(500).json({ error: err.message, stack: err.stack });
