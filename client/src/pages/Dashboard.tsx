@@ -76,9 +76,12 @@ export default function Dashboard() {
   })
 
   const byDate = (a: Task, b: Task, field: 'due_date' | 'event_date') => {
-    const da = a[field] ? new Date(a[field]!).getTime() : Infinity
-    const db = b[field] ? new Date(b[field]!).getTime() : Infinity
-    return da - db
+    const da = a[field] ? new Date(a[field]!).getTime() : null
+    const db = b[field] ? new Date(b[field]!).getTime() : null
+    if (da !== null && db !== null) return da - db
+    if (da !== null) return -1
+    if (db !== null) return 1
+    return new Date(b.received_at).getTime() - new Date(a.received_at).getTime()
   }
 
   const actionTasks = filtered
