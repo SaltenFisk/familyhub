@@ -71,19 +71,6 @@ async function pollMailbox() {
         const normSubject = normaliseSubject(parsed.subject);
         const originalFrom = extractOriginalSender(parsed);
 
-        // Skip if we already have the same original email forwarded within the last 7 days.
-        // Only dedup when we successfully extracted an original sender (not the forwarder themselves).
-        const envelopeFrom = (parsed.from?.value?.[0]?.address || '').toLowerCase();
-        if (normSubject && originalFrom && originalFrom !== envelopeFrom) {
-          const [existingDedup] = await db.query(
-            'SELECT id FROM emails WHERE norm_subject = ? AND original_from = ? AND received_at > DATE_SUB(NOW(), INTERVAL 7 DAY)',
-            [normSubject, originalFrom]
-          );
-          if (existingDedup.length > 0) {
-            console.log(`Skipping duplicate forward: "${normSubject}" from ${originalFrom}`);
-            continue;
-          }
-        }
 
         const fromAddress = parsed.from?.value?.[0]?.address || '';
         const fromName = parsed.from?.value?.[0]?.name || '';
