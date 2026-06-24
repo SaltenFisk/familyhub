@@ -20,6 +20,17 @@ router.delete('/claude-error', requireAuth, requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// POST /status/poll — force an immediate IMAP poll and return any error
+router.post('/poll', requireAuth, requireAdmin, async (req, res) => {
+  const { pollMailbox } = require('../services/imap');
+  try {
+    await pollMailbox();
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
 // GET /status/emails — recent emails with task status (debug)
 router.get('/emails', requireAuth, requireAdmin, async (req, res) => {
   const [rows] = await db.query(`
