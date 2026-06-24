@@ -159,4 +159,28 @@ async function pollMailbox() {
   }
 }
 
-module.exports = { pollMailbox };
+async function debugSearch() {
+  const client = new ImapFlow({
+    host: process.env.IMAP_HOST,
+    port: Number(process.env.IMAP_PORT) || 993,
+    secure: true,
+    auth: { user: process.env.IMAP_USER, pass: process.env.IMAP_PASSWORD },
+    logger: false,
+  });
+  await client.connect();
+  const lock = await client.getMailboxLock('INBOX');
+  try {
+    const since3d = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const since10d = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+    const unseen = await client.search({ unseen: true }, { uid: true });
+    const since3dUids = await client.search({ since: since3d }, { uid: true });
+    const since10dUids = await client.search({ since: since10d }, { uid: true });
+    const orUids = await client.search({ or: [{ unseen: true }, { since: since3d }] }, { uid: true });
+    return { unseen: unseen.length, since3d: since3dUids.length, since10d: since10dUids.length, or3d: orUids.length };
+  } finally {
+    lock.release();
+    await client.logout();
+  }
+}
+
+module.exports = { pollMailbox, debugSearch };

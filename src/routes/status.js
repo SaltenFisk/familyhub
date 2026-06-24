@@ -22,10 +22,10 @@ router.delete('/claude-error', requireAuth, requireAdmin, async (req, res) => {
 
 // POST /status/poll — force an immediate IMAP poll and return any error
 router.post('/poll', requireAuth, requireAdmin, async (req, res) => {
-  const { pollMailbox } = require('../services/imap');
+  const { pollMailbox, debugSearch } = require('../services/imap');
   try {
-    await pollMailbox();
-    res.json({ ok: true });
+    const info = await debugSearch();
+    res.json({ ok: true, ...info });
   } catch (err) {
     res.status(500).json({ error: err.message, stack: err.stack });
   }
