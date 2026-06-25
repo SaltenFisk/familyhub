@@ -3,34 +3,6 @@ const { simpleParser } = require('mailparser');
 const db = require('../db');
 const { analyseEmail } = require('./analyser');
 
-function normaliseSubject(subject) {
-  return (subject || '')
-    .replace(/^(fwd?|re)\s*:\s*/gi, '')
-    .trim()
-    .toLowerCase();
-}
-
-function extractOriginalSender(parsed) {
-  // Try structured headers first (some mail clients set these on forwards)
-  const replyTo = parsed.replyTo?.value?.[0]?.address;
-  if (replyTo) return replyTo.toLowerCase();
-
-  // Scan plain-text body for forwarded message header block
-  const text = parsed.text || '';
-  // Match patterns like:
-  //   From: Name <email@example.com>
-  //   From: email@example.com
-  // appearing after a "---------- Forwarded message ----------" or "-----Original Message-----" divider
-  const forwardDivider = /(-{3,}\s*(forwarded\s+message|original\s+message)\s*-{3,}|begin\s+forwarded\s+message)/i;
-  const dividerMatch = forwardDivider.exec(text);
-  const searchText = dividerMatch ? text.slice(dividerMatch.index) : text;
-
-  const fromLine = /(?:^|\s)from:\s*.*?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/im.exec(searchText);
-  if (fromLine) return fromLine[1].toLowerCase();
-
-  // Fall back to envelope sender
-  return (parsed.from?.value?.[0]?.address || '').toLowerCase();
-}
 
 async function pollMailbox() {
   const client = new ImapFlow({
@@ -56,13 +28,6 @@ async function pollMailbox() {
       for await (const msg of client.fetch(uids, { envelope: true, source: true }, { uid: true })) {
         const parsed = await simpleParser(msg.source);
         const messageId = parsed.messageId || `${msg.uid}@familyhub`;
-
-        // Log attachment content types to help diagnose ICS issues
-        if (parsed.attachments?.length) {
-          console.log(`Email "${parsed.subject}" attachments: ${parsed.attachments.map(a => `${a.filename || 'unnamed'}(${a.contentType})`).join(', ')}`);
-        }
-        const hasInlineCalendar = (parsed.text || '').includes('BEGIN:VCALENDAR');
-        if (hasInlineCalendar) console.log(`Email "${parsed.subject}" has inline VCALENDAR in body`);
 
         // Skip if this exact message was already stored
         const [existingMsg] = await db.query('SELECT id FROM emails WHERE message_id = ?', [messageId]);
@@ -148,28 +113,4 @@ async function pollMailbox() {
   }
 }
 
-async function debugSearch() {
-  const client = new ImapFlow({
-    host: process.env.IMAP_HOST,
-    port: Number(process.env.IMAP_PORT) || 993,
-    secure: true,
-    auth: { user: process.env.IMAP_USER, pass: process.env.IMAP_PASSWORD },
-    logger: false,
-  });
-  await client.connect();
-  const lock = await client.getMailboxLock('INBOX');
-  try {
-    const since3d = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-    const since10d = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
-    const unseen = await client.search({ unseen: true }, { uid: true });
-    const since3dUids = await client.search({ since: since3d }, { uid: true });
-    const since10dUids = await client.search({ since: since10d }, { uid: true });
-    const orUids = await client.search({ or: [{ unseen: true }, { since: since3d }] }, { uid: true });
-    return { unseen: unseen.length, since3d: since3dUids.length, since10d: since10dUids.length, or3d: orUids.length };
-  } finally {
-    lock.release();
-    await client.logout();
-  }
-}
-
-module.exports = { pollMailbox, debugSearch };
+module.exports = { pollMailbox };

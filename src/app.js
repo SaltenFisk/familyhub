@@ -9,10 +9,6 @@ const app = express();
 const BASE = process.env.BASE_PATH || '/familyhub';
 
 app.use(cors());
-
-// Deploy webhook must use raw body for HMAC verification — register before express.json()
-app.use(`${BASE}/api/deploy`, express.raw({ type: '*/*' }), require('./routes/deploy'));
-
 app.use(express.json());
 
 // API routes

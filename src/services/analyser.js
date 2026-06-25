@@ -189,7 +189,7 @@ async function analyseEmail(emailId, attachments = []) {
     const icsRaw = vcEnd > -1 ? body.slice(vcStart, vcEnd + 'END:VCALENDAR'.length) : body.slice(vcStart);
     const { text: icsFormatted } = parseIcs(icsRaw);
     if (icsFormatted) {
-      body = `[Calendar Invite]\n${icsFormatted}\n\n${body.slice(0, 1000)}`;
+      body = `[Calendar Invite]\n${icsFormatted}\n\n${body.slice(0, 2000)}`;
     }
   }
 
