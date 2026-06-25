@@ -8,7 +8,7 @@ git fetch origin main
 git checkout -- .
 git reset --hard origin/main
 npm install --production
-cd client && npm install --include=dev && npm run build && cd ..
+cd client && npm install --include=dev && ./node_modules/.bin/vite build && cd ..
 
 source /home/u63375/familyhub/.env 2>/dev/null || true
 mysql -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "
