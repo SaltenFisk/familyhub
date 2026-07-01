@@ -87,6 +87,24 @@ export default function EmailModal({ task, onClose, onUpdated, onCommented, demo
   const [newComment, setNewComment] = useState('')
   const [postingComment, setPostingComment] = useState(false)
   const assignRef = useRef<HTMLDivElement>(null)
+  const [bodyHeight, setBodyHeight] = useState(240)
+  const dragRef = useRef<{ startY: number; startH: number } | null>(null)
+
+  function onDragStart(e: React.MouseEvent) {
+    dragRef.current = { startY: e.clientY, startH: bodyHeight }
+    const onMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return
+      const delta = ev.clientY - dragRef.current.startY
+      setBodyHeight(Math.max(80, dragRef.current.startH + delta))
+    }
+    const onUp = () => {
+      dragRef.current = null
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
 
   const isDemo = !!demo
   // In demo mode we treat everything as admin (no real auth context needed)
@@ -441,7 +459,7 @@ export default function EmailModal({ task, onClose, onUpdated, onCommented, demo
           )}
 
           {/* Email body */}
-          <div className="flex-1 overflow-y-auto p-4 min-h-0">
+          <div className="overflow-y-auto p-4" style={{ height: bodyHeight }}>
             {data?.body_html && !isDemo ? (
               <iframe
                 srcDoc={dark
@@ -474,9 +492,20 @@ export default function EmailModal({ task, onClose, onUpdated, onCommented, demo
             )}
           </div>
 
+          {/* Drag handle */}
+          {task && task.id > 0 && (
+            <div
+              onMouseDown={onDragStart}
+              className="h-2 cursor-ns-resize bg-slate-100 dark:bg-slate-700 hover:bg-orange-200 dark:hover:bg-orange-500/30 transition-colors flex items-center justify-center shrink-0"
+              title="Drag to resize"
+            >
+              <div className="w-8 h-0.5 rounded bg-slate-300 dark:bg-slate-500" />
+            </div>
+          )}
+
           {/* Comments */}
           {task && task.id > 0 && (
-            <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 space-y-3 max-h-48 overflow-y-auto">
+            <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 space-y-3 overflow-y-auto" style={{ maxHeight: 200 }}>
               {comments.length === 0 && (
                 <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-1">
                   {isDemo ? 'No comments (demo)' : 'No comments yet'}
