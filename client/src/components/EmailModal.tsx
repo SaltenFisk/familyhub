@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, ChevronDown, Check, Send, Paperclip } from 'lucide-react'
+import { X, ChevronDown, ChevronUp, Check, Send, Paperclip } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -87,6 +87,7 @@ export default function EmailModal({ task, onClose, onUpdated, onCommented, demo
   const [newComment, setNewComment] = useState('')
   const [postingComment, setPostingComment] = useState(false)
   const assignRef = useRef<HTMLDivElement>(null)
+  const [detailsOpen, setDetailsOpen] = useState(false)
   const [bodyHeight, setBodyHeight] = useState(240)
   const dragRef = useRef<{ startY: number; startH: number } | null>(null)
 
@@ -349,8 +350,19 @@ export default function EmailModal({ task, onClose, onUpdated, onCommented, demo
             </Dialog.Close>
           </div>
 
-          {/* Summary / action / assignee */}
+          {/* Summary / action / assignee — collapsible */}
           {data && task && task.id > 0 && (
+            <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+              <button
+                onClick={() => setDetailsOpen(o => !o)}
+                className="w-full flex items-center justify-between px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              >
+                <span>Summary &amp; details</span>
+                {detailsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            </div>
+          )}
+          {data && task && task.id > 0 && detailsOpen && (
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 space-y-2 text-xs">
               {data.summary && <p><span className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Summary</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{data.summary}</span></p>}
               {data.action && <p><span className="font-semibold text-orange-500 dark:text-orange-400 uppercase tracking-wider text-xs">Action</span><br /><span className="text-slate-700 dark:text-slate-300 mt-0.5 block">{data.action}</span></p>}
@@ -432,7 +444,7 @@ export default function EmailModal({ task, onClose, onUpdated, onCommented, demo
           )}
 
           {/* Attachments */}
-          {attachments.length > 0 && (
+          {attachments.length > 0 && detailsOpen && (
             <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700 flex flex-wrap gap-2">
               {attachments.map(att => (
                 <button
