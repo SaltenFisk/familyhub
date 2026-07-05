@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { LogOut, Home, Sun, Moon, Archive } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
+import { LogOut, Home, Sun, Moon, Archive, BookOpen } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import TaskTable, { type Task } from '../components/TaskTable'
@@ -164,6 +164,12 @@ export default function Dashboard() {
               {tab.icon} {tab.label}
             </button>
           ))}
+          <Link
+            to="/ref"
+            className="flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+          >
+            <BookOpen size={16} /> Feature Reference
+          </Link>
         </div>
       </header>
 
@@ -257,6 +263,13 @@ export default function Dashboard() {
               {tab.label}
             </button>
           ))}
+          <Link
+            to="/ref"
+            className="flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          >
+            <BookOpen size={16} />
+            Reference
+          </Link>
         </div>
       </nav>
 
