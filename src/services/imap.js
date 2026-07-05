@@ -23,7 +23,7 @@ async function pollMailbox() {
     await client.connect();
     const lock = await client.getMailboxLock('INBOX');
     try {
-      const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+      const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
       const uids = await client.search({ or: [{ unseen: true }, { since: since }] }, { uid: true });
       for await (const msg of client.fetch(uids, { envelope: true, source: true }, { uid: true })) {
         const parsed = await simpleParser(msg.source);
@@ -33,16 +33,12 @@ async function pollMailbox() {
         const [existingMsg] = await db.query('SELECT id FROM emails WHERE message_id = ?', [messageId]);
         if (existingMsg.length > 0) continue;
 
-        const normSubject = normaliseSubject(parsed.subject);
-        const originalFrom = extractOriginalSender(parsed);
-
-
         const fromAddress = parsed.from?.value?.[0]?.address || '';
         const fromName = parsed.from?.value?.[0]?.name || '';
 
         const [result] = await db.query(
-          `INSERT INTO emails (message_id, received_at, from_address, from_name, subject, body_text, body_html, norm_subject, original_from)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO emails (message_id, received_at, from_address, from_name, subject, body_text, body_html)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
             messageId,
             parsed.date || new Date(),
@@ -51,8 +47,6 @@ async function pollMailbox() {
             parsed.subject || '',
             parsed.text || '',
             parsed.html || '',
-            normSubject,
-            originalFrom,
           ]
         );
 
