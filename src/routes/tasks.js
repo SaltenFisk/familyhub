@@ -23,7 +23,7 @@ router.get('/', requireAuth, async (req, res) => {
     LEFT JOIN task_tags tt ON t.id = tt.task_id
     LEFT JOIN tags tg ON tt.tag_id = tg.id
     LEFT JOIN comments cm ON t.id = cm.task_id
-    WHERE 1=1
+    WHERE t.id = (SELECT MIN(t2.id) FROM tasks t2 WHERE t2.email_id = t.email_id) -- hide duplicate tasks for one email
   `;
   const params = [];
 
