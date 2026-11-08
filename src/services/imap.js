@@ -3,8 +3,20 @@ const { simpleParser } = require('mailparser');
 const db = require('../db');
 const { analyseEmail } = require('./analyser');
 
+let polling = false;
 
 async function pollMailbox() {
+  // Polls can outlast the cron interval; overlapping runs would analyse the same stored email twice
+  if (polling) return;
+  polling = true;
+  try {
+    await runPoll();
+  } finally {
+    polling = false;
+  }
+}
+
+async function runPoll() {
   const client = new ImapFlow({
     host: process.env.IMAP_HOST,
     port: Number(process.env.IMAP_PORT) || 993,

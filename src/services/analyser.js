@@ -180,6 +180,10 @@ async function analyseEmail(emailId, attachments = []) {
   const email = rows[0];
   if (!email) throw new Error(`Email ${emailId} not found`);
 
+  // Never create a second task for an email that already has one
+  const [existingTask] = await db.query('SELECT id FROM tasks WHERE email_id = ? LIMIT 1', [emailId]);
+  if (existingTask.length > 0) return existingTask[0].id;
+
   let body = email.body_text || email.body_html?.replace(/<[^>]+>/g, ' ') || '';
 
   // If the body is (or contains) an inline calendar invite, extract and prepend structured data
